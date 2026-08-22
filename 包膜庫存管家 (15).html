@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="包膜庫存管家">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#A48D78">
+<title>包膜庫存管家</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#A48D78; --soft-pink:#CBB9A4; --light-pink:#E6DAC8;
+  --blue:#CBB9A4; --soft-blue:#E6DAC8; --light-blue:#F4F1EA;
+  --sage:#CBB9A4; --light-sage:#F4F1EA;
+  --cream:#F4F1EA; --bg:#FAF9F6; --dark:#4A3B30; --medium:#7A6A58; --gray:#A48D78;
+  --danger:#954A38; --radius:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--dark);
+  font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:24px;
+}
+.app{max-width:960px;margin:0 auto;}
+header.topbar{
+  position:sticky;top:0;z-index:20;
+  background:rgba(250,243,238,.92);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--soft-pink);
+  padding:14px 16px 10px;
+}
+.brand{font-weight:900;font-size:19px;color:var(--dark);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--pink);}
+.tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex:0 0 auto;
+  border:none;background:var(--light-pink);color:var(--medium);
+  padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:14px;
+  cursor:pointer;transition:.15s;white-space:nowrap;
+}
+.tab-btn.active{background:var(--pink);color:#fff;}
+.tab-btn:hover{opacity:.9;}
+main{padding:18px 16px 60px;}
+h2.page-title{font-size:18px;font-weight:900;margin:0 0 14px;color:var(--dark);}
+h3.section-title{font-size:15px;font-weight:700;margin:22px 0 10px;color:var(--medium);}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.stat-card{
+  background:#fff;border-radius:var(--radius);padding:16px;
+  border:1px solid var(--light-pink);
+}
+.stat-card .num{font-size:26px;font-weight:900;color:var(--dark);}
+.stat-card .label{font-size:12.5px;color:var(--gray);margin-top:2px;font-weight:500;}
+.stat-card.warn{background:var(--light-pink);border-color:var(--soft-pink);}
+.stat-card.warn .num{color:var(--pink);}
+.stat-card.ok{background:var(--light-sage);border-color:var(--sage);}
+.stat-card.info{background:var(--light-blue);border-color:var(--soft-blue);}
+
+.panel{background:#fff;border:1px solid var(--light-pink);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+.empty-state{color:var(--gray);font-size:13.5px;padding:22px 10px;text-align:center;line-height:1.7;}
+
+.restock-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 12px;border-radius:10px;background:var(--light-pink);margin-bottom:8px;
+}
+.restock-row .info{font-size:13.5px;line-height:1.5;}
+.restock-row .info b{font-weight:700;}
+.restock-row .qty-badge{background:var(--pink);color:#fff;font-weight:700;font-size:12px;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+.restock-row button{flex-shrink:0;}
+
+.log-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--light-pink);font-size:13px;}
+.log-row:last-child{border-bottom:none;}
+.log-row .tag{font-weight:700;font-size:11.5px;padding:2px 8px;border-radius:999px;white-space:nowrap;height:fit-content;}
+.tag-in{background:var(--light-sage);color:#5c7a5e;}
+.tag-out{background:var(--light-pink);color:var(--pink);}
+.tag-move{background:var(--light-blue);color:var(--blue);}
+.tag-adj{background:#F0EDE8;color:var(--medium);}
+.log-meta{color:var(--gray);font-size:11.5px;margin-top:2px;}
+
+.btn{
+  border:none;border-radius:10px;padding:9px 15px;font-family:inherit;font-weight:700;font-size:13.5px;
+  cursor:pointer;transition:.15s;
+}
+.btn-primary{background:var(--pink);color:#fff;}
+.btn-primary:hover{background:#b97f75;}
+.btn-secondary{background:var(--light-blue);color:var(--blue);}
+.btn-ghost{background:var(--cream);color:var(--medium);border:1px solid var(--soft-pink);}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid var(--soft-pink);}
+.btn-sm{padding:6px 11px;font-size:12.5px;}
+.btn-block{width:100%;}
+
+.crumbs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;font-size:13.5px;color:var(--medium);}
+.crumbs span.link{color:var(--blue);cursor:pointer;font-weight:700;}
+.crumbs span.sep{color:var(--gray);}
+
+.searchbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.searchbar input[type=text], .searchbar select{flex:1;min-width:140px;}
+
+input[type=text],input[type=number],input[type=date],select,textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--soft-pink);border-radius:10px;
+  font-family:inherit;font-size:14px;background:#fff;color:var(--dark);
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--soft-blue);border-color:var(--blue);}
+label{font-size:12.5px;font-weight:700;color:var(--medium);display:block;margin-bottom:5px;margin-top:12px;}
+label:first-child{margin-top:0;}
+.field-hint{font-size:11.5px;color:var(--gray);margin-top:4px;}
+
+.tile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:4px;}
+.group-label{font-size:12.5px;font-weight:700;color:var(--gray);margin:18px 0 8px;padding-left:2px;}
+.group-label:first-child{margin-top:0;}
+.tile{
+  background:#fff;border:1px solid var(--light-pink);border-radius:var(--radius);
+  padding:14px;cursor:pointer;transition:.15s;position:relative;
+}
+.tile:hover{border-color:var(--soft-pink);background:var(--light-pink);}
+.tile .tile-name{font-weight:700;font-size:14.5px;margin-bottom:6px;}
+.tile .tile-sub{font-size:12px;color:var(--gray);}
+.tile .warn-dot{position:absolute;top:12px;right:12px;width:9px;height:9px;border-radius:50%;background:var(--pink);}
+
+.variant-card{background:#fff;border:1px solid var(--light-pink);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.variant-card .vhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px;}
+.variant-card .vname{font-weight:700;font-size:14.5px;}
+.variant-card .vthresh{font-size:11.5px;color:var(--gray);}
+.store-qty-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.store-qty-chip{background:var(--light-blue);color:var(--blue);border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:700;}
+.store-qty-chip.low{background:var(--light-pink);color:var(--pink);}
+.vactions{display:flex;gap:8px;}
+
+.type-switch{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.type-switch button{flex:1;min-width:100px;}
+
+.picked-chip{display:flex;justify-content:space-between;align-items:center;background:var(--light-sage);
+  border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:700;}
+.picked-chip button{background:none;border:none;color:var(--medium);font-size:16px;cursor:pointer;font-weight:700;}
+
+.store-store-row{display:flex;gap:10px;align-items:flex-end;}
+.store-store-row > div{flex:1;}
+.swap-arrow{padding-bottom:11px;color:var(--gray);font-weight:900;}
+
+.form-actions{margin-top:18px;display:flex;gap:10px;}
+
+.settings-store-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--light-pink);}
+.settings-store-row:last-child{border-bottom:none;}
+.add-store-row{display:flex;gap:8px;margin-top:12px;}
+.add-store-row input{flex:1;}
+
+.qty-edit-grid{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin-top:8px;}
+.qty-edit-grid .sname{font-size:13.5px;font-weight:700;color:var(--medium);}
+
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--dark);color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:700;
+  opacity:0;pointer-events:none;transition:.25s;z-index:100;box-shadow:0 6px 18px rgba(0,0,0,.2);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.field-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media (max-width:480px){
+  .field-row2{grid-template-columns:1fr;}
+  .brand{font-size:17px;}
+}
+.hint-box{background:var(--light-blue);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--medium);line-height:1.6;margin-bottom:14px;}
+.error-box{background:var(--light-pink);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--pink);font-weight:700;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span>包膜庫存管家</div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+const KEY = 'wsi_db_v1';
+let db = { stores: [], products: [], logs: [], customSeries: [] };
+let ui = {
+  tab: 'dashboard', dashStore: '',
+  listSeries: null, listModel: null, listSearch: '', listStore: '',
+  txnType: '進貨', editId: null,
+  pickedProductId: null, txnSeries: '', txnModel: '', txnVariant: '', txnStore: '',
+  isAdmin: false,
+  npStore: '' // temp for new store input etc
+};
+
+const SERIES_OPTIONS = ['iPhone','iPad','Apple Watch','Samsung','Tab','Sony','Google','Switch','OPPO','VIVO','ASUS','ESR','HAO膜','卡通膜','鏡頭圈','魚骨MAGESAY','JTLegend','UAG','SPG','Allite','澄艾','河馬','ON PRO','犀牛盾'];
+function allSeriesOptions(){
+  const custom = (db.customSeries||[]).filter(s => !SERIES_OPTIONS.includes(s));
+  return [...SERIES_OPTIONS, ...custom];
+}
+function seriesSelectHtml(current){
+  const opts = allSeriesOptions();
+  const inList = opts.includes(current);
+  const isOther = current && !inList;
+  return `<select name="series" required>
+      <option value="">請選擇系列</option>
+      ${opts.map(s=>`<option value="${esc(s)}" ${current===s?'selected':''}>${esc(s)}</option>`).join('')}
+      <option value="其他" ${isOther?'selected':''}>其他（自行輸入）</option>
+    </select>
+    <input type="text" name="seriesOther" class="series-custom-input" placeholder="請輸入系列名稱"
+      style="margin-top:8px;display:${isOther?'block':'none'};" value="${isOther?esc(current):''}">`;
+}
+
+/* ---------- persistence (local cache) ---------- */
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const parsed = JSON.parse(raw); if(parsed && parsed.stores) db = parsed; }
+  }catch(e){ console.error(e); }
+  if(!Array.isArray(db.customSeries)) db.customSeries = [];
+}
+function saveDB(){
+  try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ console.error(e); }
+  pushToCloud();
+}
+
+/* ---------- cloud sync (Firebase Firestore, optional) ----------
+   在下面 firebaseConfig 貼上你自己 Firebase 專案的設定，就可以讓多台裝置即時同步。
+   沒有貼設定之前，工具會照常用「本機模式」運作，不會出錯。 */
+const firebaseConfig = {
+  apiKey: "AIzaSyCrA_y24pCtV6rokH6mBKSrjSN6MRjif-I",
+  authDomain: "taichunghao-64e02.firebaseapp.com",
+  projectId: "taichunghao-64e02",
+  storageBucket: "taichunghao-64e02.firebasestorage.app",
+  messagingSenderId: "960114535035",
+  appId: "1:960114535035:web:3e5d305cabcc8c534510de"
+};
+const DEFAULT_ADMIN_PIN = '0000';
+let fbDocRef = null;
+let fbReady = false;
+
+function initFirebase(){
+  if(typeof firebase === 'undefined') return; // SDK 沒載入（例如離線），維持本機模式
+  if(!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey.indexOf('請貼上')===0){
+    return; // 尚未設定雲端同步，維持本機模式，不顯示錯誤
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    const fsDb = firebase.firestore();
+    fbDocRef = fsDb.collection('inventoryApp').doc('sharedData');
+    firebase.auth().signInAnonymously().then(()=>{
+      fbReady = true;
+      fbDocRef.onSnapshot((snap)=>{
+        if(snap.exists){
+          const data = snap.data();
+          if(data && data.payload){
+            try{
+              const parsed = JSON.parse(data.payload);
+              if(parsed && parsed.stores){
+                db = parsed;
+                if(!Array.isArray(db.customSeries)) db.customSeries = [];
+                try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){}
+                render();
+              }
+            }catch(e){ console.error('雲端資料解析失敗', e); }
+          }
+        } else {
+          fbDocRef.set({ payload: JSON.stringify(db), updatedAt: Date.now() });
+        }
+      }, (err)=>{ console.error('雲端同步發生問題', err); toast('雲端同步中斷，暫時使用本機資料'); });
+    }).catch(err=>{ console.error('Firebase 登入失敗', err); toast('雲端連線失敗，暫時使用本機資料'); });
+  }catch(e){ console.error('Firebase 初始化失敗', e); toast('雲端設定有誤，暫時使用本機資料'); }
+}
+function pushToCloud(){
+  if(!fbReady || !fbDocRef) return;
+  fbDocRef.set({ payload: JSON.stringify(db), updatedAt: Date.now() }).catch(err=>{
+    console.error('雲端儲存失敗', err);
+    toast('雲端儲存失敗，請確認網路連線');
+  });
+}
+
+/* ---------- helpers ---------- */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function prodLabel(p){ return `${p.series} / ${p.model} / ${p.variant}`; }
+function totalStock(p){ return db.stores.reduce((sum,s) => sum + (p.stock[s]||0), 0); }
+function getProduct(id){ return db.products.find(p => p.id === id); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=> t.classList.remove('show'), 2000);
+}
+function seriesUnique(){ return [...new Set(db.products.map(p=>p.series))].sort((a,b)=> a.localeCompare(b,'zh-Hant')); }
+function leadingNumber(str){
+  const m = String(str).match(/(\d+(\.\d+)?)/);
+  return m ? parseFloat(m[1]) : null;
+}
+function modelsUnique(series){
+  const arr = [...new Set(db.products.filter(p=>!series || p.series===series).map(p=>p.model))];
+  arr.sort((a,b)=>{
+    const na = leadingNumber(a), nb = leadingNumber(b);
+    if(na!==null && nb!==null){
+      if(na!==nb) return nb - na; // 數字大的（新機型）在前，同數字會排在一起
+      return a.localeCompare(b, 'zh-Hant');
+    }
+    if(na!==null) return -1;
+    if(nb!==null) return 1;
+    return a.localeCompare(b, 'zh-Hant');
+  });
+  return arr;
+}
+
+function getLowStock(){
+  const out = [];
+  db.products.forEach(p=>{
+    const th = p.threshold || 0;
+    db.stores.forEach(s=>{
+      const q = p.stock[s] || 0;
+      if(q < th) out.push({product:p, store:s, qty:q, threshold:th});
+    });
+  });
+  out.sort((a,b)=> (a.qty-a.threshold) - (b.qty-b.threshold));
+  return out;
+}
+function seriesHasLow(series){
+  return getLowStock().some(r => r.product.series === series);
+}
+function modelHasLow(series, model){
+  return getLowStock().some(r => r.product.series === series && r.product.model === model);
+}
+function buildModelGroups(series){
+  const models = [...new Set(db.products.filter(p=>p.series===series).map(p=>p.model))];
+  const groupOf = (m)=>{
+    const str = String(m).trim();
+    const eng = str.match(/^([A-Za-z]+)/);
+    if(eng){
+      const key = eng[1].toLowerCase();
+      return { type:'text', key, label: key.charAt(0).toUpperCase()+key.slice(1) };
+    }
+    const chi = str.match(/^([\u4e00-\u9fff]+)/);
+    if(chi){
+      const key = chi[1];
+      return { type:'text', key, label: key };
+    }
+    const num = str.match(/(\d+(\.\d+)?)/);
+    if(num) return { type:'num', key: parseFloat(num[1]), label: num[1] };
+    return { type:'other', key:'', label:'其他' };
+  };
+  const map = new Map();
+  models.forEach(m=>{
+    const g = groupOf(m);
+    const mapKey = g.type + ':' + g.key;
+    if(!map.has(mapKey)) map.set(mapKey, { type:g.type, key:g.key, label:g.label, items:[] });
+    map.get(mapKey).items.push(m);
+  });
+  const groups = [...map.values()];
+  groups.forEach(g => g.items.sort((a,b)=> a.localeCompare(b,'zh-Hant')));
+  groups.sort((a,b)=>{
+    const order = { text:0, num:1, other:2 };
+    if(order[a.type] !== order[b.type]) return order[a.type] - order[b.type];
+    if(a.type==='text') return String(a.key).localeCompare(String(b.key), 'zh-Hant');
+    if(a.type==='num') return b.key - a.key;
+    return 0;
+  });
+  return groups;
+}
+
+/* ---------- render root ---------- */
+function render(){
+  renderTabs();
+  const main = document.getElementById('main');
+  if(ui.tab==='dashboard') main.innerHTML = viewDashboard();
+  else if(ui.tab==='list') main.innerHTML = viewList();
+  else if(ui.tab==='newProduct') main.innerHTML = viewNewProduct();
+  else if(ui.tab==='transaction') main.innerHTML = viewTransaction();
+  else if(ui.tab==='settings') main.innerHTML = viewSettings();
+}
+function renderTabs(){
+  const tabs = [['dashboard','首頁'],['list','庫存清單'],['newProduct','新增品項'],['transaction','異動紀錄'],['settings','設定']];
+  document.getElementById('tabs').innerHTML = tabs.map(([id,label]) =>
+    `<button class="tab-btn ${ui.tab===id?'active':''}" data-act="tab" data-tab="${id}">${label}</button>`
+  ).join('');
+}
+
+/* ---------- dashboard ---------- */
+function viewDashboard(){
+  const filterStore = ui.dashStore || '';
+  let low = getLowStock();
+  if(filterStore) low = low.filter(r => r.store === filterStore);
+
+  let productsCount, totalUnits;
+  if(filterStore){
+    productsCount = db.products.filter(p => (p.stock[filterStore]||0) > 0).length;
+    totalUnits = db.products.reduce((s,p) => s + (p.stock[filterStore]||0), 0);
+  } else {
+    productsCount = db.products.length;
+    totalUnits = db.products.reduce((s,p) => s + totalStock(p), 0);
+  }
+
+  const relevantLogs = filterStore ? db.logs.filter(l => l.storeFrom===filterStore || l.storeTo===filterStore) : db.logs;
+  const todayCount = relevantLogs.filter(l => l.date===todayStr()).length;
+  const recentLogs = [...relevantLogs].sort((a,b)=> b.createdAt - a.createdAt).slice(0,8);
+
+  let html = `<h2 class="page-title">首頁總覽</h2>`;
+
+  if(db.stores.length>0){
+    html += `<div class="type-switch" style="margin-bottom:16px;">
+      <button class="btn btn-sm ${!filterStore?'btn-primary':'btn-ghost'}" data-act="dash-store" data-store="">全部店家</button>
+      ${db.stores.map(s=>`<button class="btn btn-sm ${filterStore===s?'btn-primary':'btn-ghost'}" data-act="dash-store" data-store="${esc(s)}">${esc(s)}</button>`).join('')}
+    </div>`;
+  }
+
+  html += `<div class="cards-grid">
+    <div class="stat-card"><div class="num">${productsCount}</div><div class="label">${filterStore?'該店品項數':'品項總數'}</div></div>
+    <div class="stat-card warn"><div class="num">${low.length}</div><div class="label">低庫存警示</div></div>
+    <div class="stat-card ok"><div class="num">${totalUnits}</div><div class="label">${filterStore?'該店庫存件數':'總庫存件數'}</div></div>
+    <div class="stat-card info"><div class="num">${todayCount}</div><div class="label">今日異動筆數</div></div>
+  </div>`;
+
+  html += `<h3 class="section-title">需要補貨${filterStore?'（'+esc(filterStore)+'）':''}</h3>`;
+  if(db.stores.length===0){
+    html += `<div class="empty-state">請先到「設定」新增店家，才能開始記錄庫存。</div>`;
+  } else if(low.length===0){
+    if(db.products.length===0){
+      html += `<div class="empty-state">還沒有任何品項，到「新增品項」建立第一筆庫存吧！</div>`;
+    } else {
+      html += `<div class="empty-state">目前沒有低於安全庫存的品項 🌿</div>`;
+    }
+  } else {
+    html += low.map(r => `
+      <div class="restock-row">
+        <div class="info"><b>${esc(prodLabel(r.product))}</b><br>${esc(r.store)}：目前 ${r.qty}／安全庫存 ${r.threshold}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="qty-badge">差 ${r.threshold - r.qty}</span>
+          <button class="btn btn-primary btn-sm" data-act="restock-jump" data-id="${r.product.id}" data-store="${esc(r.store)}">去進貨</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  html += `<h3 class="section-title">最近異動${filterStore?'（'+esc(filterStore)+'）':''}</h3>`;
+  html += `<div class="panel">`;
+  if(recentLogs.length===0){
+    html += `<div class="empty-state">尚無任何異動紀錄</div>`;
+  } else {
+    html += recentLogs.map(l => logRowHtml(l)).join('');
+  }
+  html += `</div>`;
+  return html;
+}
+
+function logTypeTag(type){
+  if(type==='進貨') return '<span class="tag tag-in">進貨</span>';
+  if(type==='售出') return '<span class="tag tag-out">售出</span>';
+  if(type==='調貨') return '<span class="tag tag-move">調貨</span>';
+  return '<span class="tag tag-adj">盤點調整</span>';
+}
+function logRowHtml(l){
+  const p = getProduct(l.productId);
+  const label = p ? prodLabel(p) : '（已刪除的品項）';
+  let detail = '';
+  if(l.type==='進貨') detail = `${esc(l.storeTo)} ＋${l.qty}`;
+  else if(l.type==='售出') detail = `${esc(l.storeFrom)} －${l.qty}`;
+  else if(l.type==='調貨') detail = `${esc(l.storeFrom)} → ${esc(l.storeTo)}：${l.qty}`;
+  else detail = `${esc(l.storeTo)} 調整為 ${l.qty}`;
+  return `<div class="log-row">
+    <div>${logTypeTag(l.type)}<div style="margin-top:4px;">${esc(label)}</div><div class="log-meta">${detail}${l.note?(' · '+esc(l.note)):''}</div></div>
+    <div class="log-meta" style="white-space:nowrap;">${esc(l.date)}</div>
+  </div>`;
+}
+
+/* ---------- list ---------- */
+function viewList(){
+  let html = `<h2 class="page-title">庫存清單</h2>`;
+  html += `<div class="searchbar">
+    <input type="text" id="listSearchInput" placeholder="搜尋系列／型號／品相…" value="${esc(ui.listSearch)}" data-act="bind-listSearch">
+    <select data-act="bind-listStore">
+      <option value="">全部店家</option>
+      ${db.stores.map(s=>`<option value="${esc(s)}" ${ui.listStore===s?'selected':''}>${esc(s)}</option>`).join('')}
+    </select>
+  </div>`;
+
+  if(db.products.length===0){
+    html += `<div class="empty-state">還沒有任何品項，到「新增品項」建立第一筆庫存吧！</div>`;
+    return html;
+  }
+
+  if(ui.listSearch.trim()){
+    const kw = ui.listSearch.trim().toLowerCase();
+    const results = db.products.filter(p => prodLabel(p).toLowerCase().includes(kw))
+      .sort((a,b)=> prodLabel(a).localeCompare(prodLabel(b), 'zh-Hant'));
+    html += `<div class="field-hint" style="margin-bottom:10px;">共 ${results.length} 筆符合「${esc(ui.listSearch)}」</div>`;
+    if(results.length===0) html += `<div class="empty-state">找不到符合的品項</div>`;
+    else html += results.map(p=>variantCardHtml(p)).join('');
+    return html;
+  }
+
+  // breadcrumb navigation
+  html += `<div class="crumbs">
+    <span class="link" data-act="crumb-all">全部系列</span>
+    ${ui.listSeries?`<span class="sep">›</span><span class="link" data-act="crumb-series">${esc(ui.listSeries)}</span>`:''}
+    ${ui.listModel?`<span class="sep">›</span><span>${esc(ui.listModel)}</span>`:''}
+  </div>`;
+
+  if(ui.listModel){
+    const items = db.products.filter(p=>p.series===ui.listSeries && p.model===ui.listModel)
+      .sort((a,b)=> a.variant.localeCompare(b.variant, 'zh-Hant'));
+    html += items.map(p=>variantCardHtml(p)).join('');
+  } else if(ui.listSeries){
+    const seriesItems = db.products.filter(p=>p.series===ui.listSeries);
+    if(seriesItems.length <= SIMPLE_SERIES_MAX){
+      const sorted = [...seriesItems].sort((a,b)=> (a.model+a.variant).localeCompare(b.model+b.variant,'zh-Hant'));
+      html += `<div class="tile-grid">` + sorted.map(p=>flatItemTileHtml(p)).join('') + `</div>`;
+    } else {
+      const groups = buildModelGroups(ui.listSeries);
+      let groupsHtml = '';
+      groups.forEach(g=>{
+        groupsHtml += `<div class="group-label">${esc(g.label)}</div>`;
+        groupsHtml += `<div class="tile-grid">` + g.items.map(m=>{
+          const items = db.products.filter(p=>p.series===ui.listSeries && p.model===m);
+          if(items.length === 1){
+            return flatItemTileHtml(items[0]);
+          }
+          const total = items.reduce((s,p)=>s+totalStock(p),0);
+          const low = modelHasLow(ui.listSeries, m);
+          return `<div class="tile" data-act="go-model" data-model="${esc(m)}">
+            ${low?'<div class="warn-dot"></div>':''}
+            <div class="tile-name">${esc(m)}</div>
+            <div class="tile-sub">${items.length} 種品相 · 共 ${total} 件</div>
+          </div>`;
+        }).join('') + `</div>`;
+      });
+      html += groupsHtml;
+    }
+  } else {
+    const series = seriesUnique();
+    html += `<div class="tile-grid">` + series.map(s=>{
+      const items = db.products.filter(p=>p.series===s);
+      const total = items.reduce((sum,p)=>sum+totalStock(p),0);
+      const low = seriesHasLow(s);
+      return `<div class="tile" data-act="go-series" data-series="${esc(s)}">
+        ${low?'<div class="warn-dot"></div>':''}
+        <div class="tile-name">${esc(s)}</div>
+        <div class="tile-sub">${modelsUnique(s).length} 個型號 · 共 ${total} 件</div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+  return html;
+}
+
+function variantCardHtml(p){
+  const th = p.threshold || 0;
+  const storesToShow = ui.listStore ? [ui.listStore] : db.stores;
+  const chips = storesToShow.map(s=>{
+    const q = p.stock[s] || 0;
+    const low = q < th;
+    return `<div class="store-qty-chip ${low?'low':''}">${esc(s)} ${q}</div>`;
+  }).join('');
+  return `<div class="variant-card">
+    <div class="vhead">
+      <div><div class="vname">${esc(prodLabel(p))}</div><div class="vthresh">安全庫存（每店）：${th}</div></div>
+    </div>
+    <div class="store-qty-list">${chips || '<span class="field-hint">尚無店家資料</span>'}</div>
+    ${ui.isAdmin ? `<div class="vactions">
+      <button class="btn btn-secondary btn-sm" data-act="edit-product" data-id="${p.id}">編輯</button>
+      <button class="btn btn-danger btn-sm" data-act="delete-product" data-id="${p.id}">刪除</button>
+    </div>` : ''}
+  </div>`;
+}
+
+const SIMPLE_SERIES_MAX = 6; // 系列裡總品項數在這個數字以下，就跳過型號分組，直接一整排顯示
+function flatItemTileHtml(p){
+  const th = p.threshold || 0;
+  const storesToShow = ui.listStore ? [ui.listStore] : db.stores;
+  const chips = storesToShow.map(s=>{
+    const q = p.stock[s] || 0;
+    const low = q < th;
+    return `<div class="store-qty-chip ${low?'low':''}">${esc(s)} ${q}</div>`;
+  }).join('');
+  const label = p.model ? `${esc(p.model)} / ${esc(p.variant)}` : esc(p.variant);
+  return `<div class="variant-card" style="margin-bottom:0;">
+    <div class="vhead">
+      <div><div class="vname">${label}</div><div class="vthresh">安全庫存（每店）：${th}</div></div>
+    </div>
+    <div class="store-qty-list">${chips || '<span class="field-hint">尚無店家資料</span>'}</div>
+    ${ui.isAdmin ? `<div class="vactions">
+      <button class="btn btn-secondary btn-sm" data-act="edit-product" data-id="${p.id}">編輯</button>
+      <button class="btn btn-danger btn-sm" data-act="delete-product" data-id="${p.id}">刪除</button>
+    </div>` : ''}
+  </div>`;
+}
+
+/* ---------- form ---------- */
+function viewNewProduct(){
+  let html = `<h2 class="page-title">${ui.editId ? '編輯品項' : '新增品項'}</h2>`;
+  if(!ui.isAdmin){
+    html += `<div class="error-box">新增／編輯品項需要管理員權限，請到「設定」頁登入管理員。</div>`;
+    return html;
+  }
+  if(db.stores.length===0){
+    html += `<div class="error-box">尚未設定任何店家，請先到「設定」新增店家。</div>`;
+    return html;
+  }
+  html += ui.editId ? formEditProduct() : formNewProduct();
+  return html;
+}
+
+function viewTransaction(){
+  let html = `<h2 class="page-title">新增異動記錄</h2>`;
+  if(db.stores.length===0){
+    html += `<div class="error-box">尚未設定任何店家，請先到「設定」新增店家。</div>`;
+    return html;
+  }
+  html += formTransaction();
+  return html;
+}
+
+function formNewProduct(){
+  return `
+  <form data-form="newProduct" class="panel">
+    <div class="hint-box">建立一個新的品項（例如：iPhone / iPhone17 / 亮面）。之後的進出貨用「新增異動記錄」來更新數量。</div>
+    <label>系列</label>
+    ${seriesSelectHtml('')}
+
+    <label>型號（例如 iPhone17）</label>
+    <input type="text" name="model" list="modelDL" required placeholder="例如：iPhone17">
+    <datalist id="modelDL">${modelsUnique().map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
+
+    <label>品相／款式（例如 亮面）</label>
+    <input type="text" name="variant" required placeholder="例如：亮面">
+
+    <label>安全庫存（每間店低於這個數量會提醒補貨）</label>
+    <input type="number" name="threshold" min="0" value="1" required>
+
+    <label style="margin-top:16px;">各店初始庫存</label>
+    <div class="qty-edit-grid">
+      ${db.stores.map(s=>`<div class="sname">${esc(s)}</div><input type="number" min="0" value="0" name="init_${esc(s)}">`).join('')}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-block">建立品項</button>
+    </div>
+  </form>`;
+}
+
+function formTransaction(){
+  const picked = ui.pickedProductId ? getProduct(ui.pickedProductId) : null;
+  const seriesOpts = seriesUnique().sort((a,b)=> a.localeCompare(b,'zh-Hant'));
+  const modelOpts = ui.txnSeries ? modelsUnique(ui.txnSeries) : [];
+  const variantOpts = (ui.txnSeries && ui.txnModel)
+    ? [...new Set(db.products.filter(p=>p.series===ui.txnSeries && p.model===ui.txnModel).map(p=>p.variant))].sort((a,b)=>a.localeCompare(b,'zh-Hant'))
+    : [];
+
+  let storeFields = '';
+  if(ui.txnType==='進貨' || ui.txnType==='售出' || ui.txnType==='盤點調整'){
+    const label = ui.txnType==='進貨' ? '進貨店家' : ui.txnType==='售出' ? '銷售店家' : '盤點店家';
+    storeFields = `<label>${label}</label>
+      <select name="store" required>
+        <option value="">請選擇店家</option>
+        ${db.stores.map(s=>`<option value="${esc(s)}" ${ui.txnStore===s?'selected':''}>${esc(s)}</option>`).join('')}
+      </select>`;
+  } else {
+    storeFields = `<div class="store-store-row">
+      <div><label>從（調出店）</label>
+        <select name="storeFrom" required>
+          <option value="">請選擇</option>
+          ${db.stores.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="swap-arrow">→</div>
+      <div><label>到（調入店）</label>
+        <select name="storeTo" required>
+          <option value="">請選擇</option>
+          ${db.stores.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  }
+
+  const qtyLabel = ui.txnType==='盤點調整' ? '盤點後庫存數量' : '數量';
+
+  return `
+  <div class="type-switch">
+    ${['進貨','售出','調貨','盤點調整'].map(t=>`<button class="btn ${ui.txnType===t?'btn-primary':'btn-ghost'} btn-sm" data-act="txn-type" data-txn="${t}">${t}</button>`).join('')}
+  </div>
+  <form data-form="transaction" class="panel">
+    <label>選擇品項</label>
+    <div class="field-row2">
+      <div>
+        <label style="margin-top:0;">系列</label>
+        <select data-act="txn-select-series">
+          <option value="">請選擇系列</option>
+          ${seriesOpts.map(s=>`<option value="${esc(s)}" ${ui.txnSeries===s?'selected':''}>${esc(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="margin-top:0;">型號</label>
+        <select data-act="txn-select-model" ${!ui.txnSeries?'disabled':''}>
+          <option value="">請選擇型號</option>
+          ${modelOpts.map(m=>`<option value="${esc(m)}" ${ui.txnModel===m?'selected':''}>${esc(m)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <label>品相／款式</label>
+    <select data-act="txn-select-variant" ${!ui.txnModel?'disabled':''}>
+      <option value="">請選擇品相／款式</option>
+      ${variantOpts.map(v=>`<option value="${esc(v)}" ${ui.txnVariant===v?'selected':''}>${esc(v)}</option>`).join('')}
+    </select>
+    ${picked ? `<div class="picked-chip" style="margin-top:10px;"><span>已選：${esc(prodLabel(picked))} · 目前總庫存 ${totalStock(picked)}</span><button type="button" data-act="txn-clear-pick">✕</button></div>
+    <div class="store-qty-list" style="margin-top:8px;">${db.stores.map(s=>{
+      const q = picked.stock[s]||0;
+      const low = q < (picked.threshold||0);
+      return `<div class="store-qty-chip ${low?'low':''}">${esc(s)} ${q}</div>`;
+    }).join('')}</div>` : ''}
+
+    ${storeFields}
+
+    <label>${qtyLabel}</label>
+    <input type="number" name="qty" min="0" required>
+
+    <div class="field-row2">
+      <div><label>日期</label><input type="date" name="date" value="${todayStr()}" required></div>
+      <div><label>備註（選填）</label><input type="text" name="note" placeholder=""></div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-block">儲存並更新庫存</button>
+    </div>
+  </form>`;
+}
+
+function formEditProduct(){
+  const p = getProduct(ui.editId);
+  if(!p) return `<div class="empty-state">找不到這個品項，可能已被刪除。</div>`;
+  return `
+  <form data-form="editProduct" class="panel">
+    <label>系列</label>
+    ${seriesSelectHtml(p.series)}
+    <label>型號</label>
+    <input type="text" name="model" value="${esc(p.model)}" required>
+    <label>品相／款式</label>
+    <input type="text" name="variant" value="${esc(p.variant)}" required>
+    <label>安全庫存（每間店）</label>
+    <input type="number" name="threshold" min="0" value="${p.threshold||0}" required>
+
+    <label style="margin-top:16px;">各店目前庫存（直接修改＝盤點調整）</label>
+    <div class="qty-edit-grid">
+      ${db.stores.map(s=>`<div class="sname">${esc(s)}</div><input type="number" min="0" value="${p.stock[s]||0}" name="stock_${esc(s)}">`).join('')}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">儲存變更</button>
+      <button type="button" class="btn btn-ghost" data-act="cancel-edit">取消</button>
+    </div>
+  </form>`;
+}
+
+/* ---------- settings ---------- */
+function viewSettings(){
+  let html = `<h2 class="page-title">設定</h2>`;
+
+  html += `<div class="panel">
+    <h3 class="section-title" style="margin-top:0;">管理員</h3>
+    ${!ui.isAdmin ? `
+      <div class="field-hint" style="margin-bottom:10px;">新增／編輯／刪除品項、管理店家清單、匯入備份、清除資料，都需要先登入管理員。</div>
+      <form data-form="adminLogin">
+        <label style="margin-top:0;">管理員 PIN 碼</label>
+        <input type="password" name="pin" inputmode="numeric" autocomplete="off" required>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">登入</button></div>
+      </form>
+    ` : `
+      <div class="field-hint" style="margin-bottom:12px;">✅ 目前已登入管理員權限。</div>
+      <button class="btn btn-ghost" data-act="admin-logout" style="margin-bottom:16px;">登出管理員</button>
+      <form data-form="changePin">
+        <label style="margin-top:0;">修改管理員 PIN 碼</label>
+        <input type="text" name="newPin" inputmode="numeric" autocomplete="off" placeholder="輸入新的 PIN 碼" required>
+        <div class="form-actions"><button type="submit" class="btn btn-secondary">更新 PIN 碼</button></div>
+      </form>
+    `}
+  </div>`;
+
+  html += `<div class="panel">
+    <h3 class="section-title" style="margin-top:0;">加到主畫面</h3>
+    <div class="field-hint" style="margin-bottom:6px;"><b>iPhone/iPad（Safari）：</b>點下方分享圖示 → 加入主畫面，就會出現獨立的APP圖示，點開沒有瀏覽器網址列。</div>
+    <div class="field-hint"><b>Android（Chrome）：</b>點右上角選單 → 新增至主畫面／安裝應用程式。</div>
+  </div>`;
+
+  html += `<div class="panel">
+    <h3 class="section-title" style="margin-top:0;">店家管理</h3>
+    ${db.stores.length===0 ? `<div class="empty-state">尚未新增任何店家</div>` :
+      db.stores.map(s=>`<div class="settings-store-row"><span>${esc(s)}</span>${ui.isAdmin?`<button class="btn btn-danger btn-sm" data-act="remove-store" data-store="${esc(s)}">移除</button>`:''}</div>`).join('')}
+    ${ui.isAdmin ? `
+      <form data-form="addStore" class="add-store-row">
+        <input type="text" name="storeName" placeholder="輸入新店名，例如：台北旗艦店" required>
+        <button type="submit" class="btn btn-primary">新增店家</button>
+      </form>
+    ` : `<div class="field-hint" style="margin-top:10px;">新增或移除店家需要管理員權限。</div>`}
+  </div>`;
+
+  html += `<div class="panel">
+    <h3 class="section-title" style="margin-top:0;">備份與還原</h3>
+    <div class="field-hint" style="margin-bottom:12px;">資料儲存在這台裝置的瀏覽器中，換裝置或清除瀏覽器資料前，請先匯出備份。</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-secondary" data-act="export-data">匯出備份（JSON）</button>
+      ${ui.isAdmin ? `<label class="btn btn-secondary" style="cursor:pointer;">
+        匯入備份
+        <input type="file" accept="application/json" id="importFile" style="display:none;">
+      </label>` : ''}
+    </div>
+    ${!ui.isAdmin ? `<div class="field-hint" style="margin-top:10px;">匯入備份需要管理員權限。</div>` : ''}
+  </div>`;
+
+  if(ui.isAdmin){
+    html += `<div class="panel">
+      <h3 class="section-title" style="margin-top:0;">危險區域</h3>
+      <button class="btn btn-danger" data-act="clear-all">清除所有資料</button>
+    </div>`;
+  }
+  return html;
+}
+
+/* ---------- actions ---------- */
+function applyTransaction(type, data){
+  const p = getProduct(data.productId);
+  if(!p) return;
+  p.stock = p.stock || {};
+  const log = { id: uid(), type, productId: p.id, date: data.date, note: data.note||'', createdAt: Date.now() };
+
+  if(type==='進貨'){
+    p.stock[data.store] = (p.stock[data.store]||0) + data.qty;
+    log.storeTo = data.store; log.qty = data.qty;
+  } else if(type==='售出'){
+    p.stock[data.store] = Math.max(0, (p.stock[data.store]||0) - data.qty);
+    log.storeFrom = data.store; log.qty = data.qty;
+  } else if(type==='調貨'){
+    p.stock[data.storeFrom] = Math.max(0, (p.stock[data.storeFrom]||0) - data.qty);
+    p.stock[data.storeTo] = (p.stock[data.storeTo]||0) + data.qty;
+    log.storeFrom = data.storeFrom; log.storeTo = data.storeTo; log.qty = data.qty;
+  } else if(type==='盤點調整'){
+    p.stock[data.store] = data.qty;
+    log.storeTo = data.store; log.qty = data.qty;
+  }
+  db.logs.push(log);
+  p.updatedAt = Date.now();
+}
+
+function init(){
+  loadDB();
+  setupPWA();
+  render();
+  initFirebase();
+
+  const main = document.getElementById('main');
+
+  document.body.addEventListener('click', (e)=>{
+    const el = e.target.closest('[data-act]');
+    if(!el) return;
+    const act = el.dataset.act;
+
+    if(act==='tab'){ ui.tab = el.dataset.tab; if(ui.tab==='newProduct'){ ui.editId=null; } render(); }
+    else if(act==='dash-store'){ ui.dashStore = el.dataset.store; render(); }
+    else if(act==='go-series'){ ui.listSeries = el.dataset.series; ui.listModel=null; render(); }
+    else if(act==='go-model'){ ui.listModel = el.dataset.model; render(); }
+    else if(act==='crumb-all'){ ui.listSeries=null; ui.listModel=null; render(); }
+    else if(act==='crumb-series'){ ui.listModel=null; render(); }
+    else if(act==='edit-product'){ if(!ui.isAdmin){ toast('需要管理員權限'); return; } ui.editId = el.dataset.id; ui.tab='newProduct'; render(); }
+    else if(act==='cancel-edit'){ ui.editId=null; render(); }
+    else if(act==='delete-product'){
+      if(!ui.isAdmin){ toast('需要管理員權限'); return; }
+      if(confirm('確定要刪除這個品項嗎？此動作無法復原。')){
+        db.products = db.products.filter(p=>p.id!==el.dataset.id);
+        saveDB(); toast('已刪除品項'); render();
+      }
+    }
+    else if(act==='restock-jump'){
+      const p = getProduct(el.dataset.id);
+      ui.tab='transaction'; ui.txnType='進貨';
+      ui.pickedProductId = el.dataset.id; ui.txnStore = el.dataset.store;
+      if(p){ ui.txnSeries = p.series; ui.txnModel = p.model; ui.txnVariant = p.variant; }
+      render();
+    }
+    else if(act==='txn-type'){ ui.txnType = el.dataset.txn; render(); }
+    else if(act==='txn-clear-pick'){ ui.pickedProductId=null; ui.txnSeries=''; ui.txnModel=''; ui.txnVariant=''; render(); }
+    else if(act==='remove-store'){
+      if(!ui.isAdmin){ toast('需要管理員權限'); return; }
+      if(confirm(`確定要移除「${el.dataset.store}」嗎？該店的庫存資料會一併消失。`)){
+        db.stores = db.stores.filter(s=>s!==el.dataset.store);
+        db.products.forEach(p=>{ delete p.stock[el.dataset.store]; });
+        saveDB(); toast('已移除店家'); render();
+      }
+    }
+    else if(act==='export-data'){ exportData(); }
+    else if(act==='admin-logout'){ ui.isAdmin=false; toast('已登出管理員'); render(); }
+    else if(act==='clear-all'){
+      if(!ui.isAdmin){ toast('需要管理員權限'); return; }
+      if(confirm('確定要清除所有資料嗎？此動作無法復原，請先確認已匯出備份。')){
+        db = { stores: [], products: [], logs: [], customSeries: [] };
+        saveDB(); toast('資料已清除'); render();
+      }
+    }
+  });
+
+  main.addEventListener('input', (e)=>{
+    if(e.target.matches('[data-act="bind-listSearch"]')){ ui.listSearch = e.target.value; render(); document.getElementById('listSearchInput')?.focus(); moveCaretEnd('listSearchInput'); }
+  });
+
+  main.addEventListener('change', (e)=>{
+    if(e.target.matches('[data-act="bind-listStore"]')){ ui.listStore = e.target.value; render(); }
+    else if(e.target.id==='importFile'){ if(!ui.isAdmin){ toast('需要管理員權限'); return; } importData(e.target.files[0]); }
+    else if(e.target.matches('[data-act="txn-select-series"]')){
+      ui.txnSeries = e.target.value; ui.txnModel=''; ui.txnVariant=''; ui.pickedProductId=null; render();
+    }
+    else if(e.target.matches('[data-act="txn-select-model"]')){
+      ui.txnModel = e.target.value; ui.txnVariant=''; ui.pickedProductId=null; render();
+    }
+    else if(e.target.matches('[data-act="txn-select-variant"]')){
+      ui.txnVariant = e.target.value;
+      const found = db.products.find(p=>p.series===ui.txnSeries && p.model===ui.txnModel && p.variant===ui.txnVariant);
+      ui.pickedProductId = found ? found.id : null;
+      render();
+    }
+    else if(e.target.name==='series' && e.target.tagName==='SELECT'){
+      const custom = e.target.parentElement.querySelector('.series-custom-input');
+      if(!custom) return;
+      if(e.target.value==='其他'){ custom.style.display='block'; custom.required=true; custom.focus(); }
+      else { custom.style.display='none'; custom.required=false; custom.value=''; }
+    }
+  });
+
+  main.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const formType = e.target.dataset.form;
+    const fd = new FormData(e.target);
+
+    if(formType==='newProduct'){
+      if(!ui.isAdmin){ toast('需要管理員權限'); return; }
+      let series = fd.get('series').trim();
+      if(series==='其他') series = (fd.get('seriesOther')||'').trim();
+      if(!series){ toast('請選擇或輸入系列'); return; }
+      if(!allSeriesOptions().includes(series)){ db.customSeries.push(series); }
+      const model = fd.get('model').trim(), variant = fd.get('variant').trim();
+      const threshold = Number(fd.get('threshold'))||0;
+      const dup = db.products.some(p=>p.series===series && p.model===model && p.variant===variant);
+      if(dup){ toast('這個品項已經存在，請至庫存清單編輯'); return; }
+      const stock = {};
+      db.stores.forEach(s=>{ stock[s] = Number(fd.get('init_'+s))||0; });
+      db.products.push({ id: uid(), series, model, variant, threshold, stock, updatedAt: Date.now() });
+      saveDB(); toast('品項已建立'); e.target.reset(); render();
+    }
+
+    else if(formType==='transaction'){
+      if(!ui.pickedProductId){ toast('請先選擇品項'); return; }
+      const qty = Number(fd.get('qty'));
+      if(isNaN(qty) || qty<0){ toast('請輸入正確的數量'); return; }
+      const date = fd.get('date') || todayStr();
+      const note = fd.get('note') || '';
+
+      if(ui.txnType==='調貨'){
+        const storeFrom = fd.get('storeFrom'), storeTo = fd.get('storeTo');
+        if(!storeFrom || !storeTo){ toast('請選擇調出與調入店家'); return; }
+        if(storeFrom===storeTo){ toast('調出與調入店家不能相同'); return; }
+        applyTransaction('調貨', { productId: ui.pickedProductId, storeFrom, storeTo, qty, date, note });
+      } else {
+        const store = fd.get('store');
+        if(!store){ toast('請選擇店家'); return; }
+        applyTransaction(ui.txnType, { productId: ui.pickedProductId, store, qty, date, note });
+      }
+      saveDB(); toast('已更新庫存');
+      ui.pickedProductId=null; ui.txnSeries=''; ui.txnModel=''; ui.txnVariant=''; ui.txnStore='';
+      render();
+    }
+
+    else if(formType==='editProduct'){
+      if(!ui.isAdmin){ toast('需要管理員權限'); return; }
+      const p = getProduct(ui.editId);
+      if(!p){ toast('品項不存在'); return; }
+      let series = fd.get('series').trim();
+      if(series==='其他') series = (fd.get('seriesOther')||'').trim();
+      if(!series){ toast('請選擇或輸入系列'); return; }
+      if(!allSeriesOptions().includes(series)){ db.customSeries.push(series); }
+      p.series = series;
+      p.model = fd.get('model').trim();
+      p.variant = fd.get('variant').trim();
+      p.threshold = Number(fd.get('threshold'))||0;
+      db.stores.forEach(s=>{
+        const newQty = Number(fd.get('stock_'+s))||0;
+        const oldQty = p.stock[s]||0;
+        if(newQty !== oldQty){
+          p.stock[s] = newQty;
+          db.logs.push({ id: uid(), type:'盤點調整', productId: p.id, date: todayStr(), storeTo: s, qty: newQty, note:`原數量 ${oldQty}`, createdAt: Date.now() });
+        }
+      });
+      p.updatedAt = Date.now();
+      saveDB(); toast('已儲存變更');
+      ui.editId=null; ui.tab='list';
+      render();
+    }
+
+    else if(formType==='addStore'){
+      if(!ui.isAdmin){ toast('需要管理員權限'); return; }
+      const name = fd.get('storeName').trim();
+      if(!name) return;
+      if(db.stores.includes(name)){ toast('這個店名已經存在'); return; }
+      db.stores.push(name);
+      db.products.forEach(p=>{ if(!(name in p.stock)) p.stock[name]=0; });
+      saveDB(); toast('已新增店家'); render();
+    }
+
+    else if(formType==='adminLogin'){
+      const pin = (fd.get('pin')||'').trim();
+      const expected = db.adminPin || DEFAULT_ADMIN_PIN;
+      if(pin === expected){
+        ui.isAdmin = true; toast('管理員權限已解鎖'); render();
+      } else {
+        toast('PIN 碼不正確');
+      }
+    }
+
+    else if(formType==='changePin'){
+      if(!ui.isAdmin) return;
+      const newPin = (fd.get('newPin')||'').trim();
+      if(!newPin){ toast('請輸入新的 PIN 碼'); return; }
+      db.adminPin = newPin;
+      saveDB(); toast('管理員 PIN 碼已更新'); render();
+    }
+  });
+}
+
+function moveCaretEnd(id){ const el = document.getElementById(id); moveCaretEndEl(el); }
+function moveCaretEndEl(el){ if(!el) return; const v = el.value; el.value=''; el.value=v; }
+
+/* ---------- PWA: home-screen icon + manifest (works from a single file, no server needed) ---------- */
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function generateIconDataUrl(size){
+  const canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  roundRectPath(ctx, 0, 0, size, size, size*0.22);
+  ctx.fillStyle = '#A48D78';
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `700 ${Math.round(size*0.52)}px "Noto Sans TC", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('包', size/2, size*0.56);
+  return canvas.toDataURL('image/png');
+}
+function setupPWA(){
+  try{
+    const icon192 = generateIconDataUrl(192);
+    const icon512 = generateIconDataUrl(512);
+
+    const appleIcon = document.createElement('link');
+    appleIcon.rel = 'apple-touch-icon';
+    appleIcon.href = icon192;
+    document.head.appendChild(appleIcon);
+
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.href = icon192;
+    document.head.appendChild(favicon);
+
+    const manifest = {
+      name: '包膜庫存管家',
+      short_name: '庫存管家',
+      start_url: '.',
+      display: 'standalone',
+      background_color: '#FAFAF8',
+      theme_color: '#A48D78',
+      icons: [
+        { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+        { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = URL.createObjectURL(blob);
+    document.head.appendChild(manifestLink);
+  }catch(e){ console.error('PWA setup failed', e); }
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  a.href = url; a.download = `包膜庫存備份_${stamp}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('已匯出備份');
+}
+function importData(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed || !Array.isArray(parsed.stores) || !Array.isArray(parsed.products)){
+        toast('檔案格式不正確'); return;
+      }
+      if(confirm('匯入將會覆蓋目前所有資料，確定要繼續嗎？')){
+        db = { stores: parsed.stores||[], products: parsed.products||[], logs: parsed.logs||[], customSeries: parsed.customSeries||[], adminPin: parsed.adminPin };
+        saveDB(); toast('匯入成功'); render();
+      }
+    }catch(err){ toast('讀取檔案失敗，請確認是正確的備份檔'); }
+  };
+  reader.readAsText(file);
+}
+
+init();
+</script>
+</body>
+</html>
