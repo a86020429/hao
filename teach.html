@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>連接 Firebase 雲端同步・逐步教學</title>
+<style>
+  :root{
+    --primary:#A8998A; --primary-dark:#8C7C6E; --accent:#C9A66B;
+    --bg:#F7F3EC; --surface:#FFFFFF; --text:#4A4038; --text-soft:#8A7F73; --border:#E5DED2;
+    --ok:#8FA88C; --warn:#D9A15C; --danger:#C46A5A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:26px 20px;text-align:center;}
+  header h1{margin:0 0 6px;font-size:22px;color:var(--primary-dark);}
+  header p{margin:0;color:var(--text-soft);font-size:13.5px;}
+
+  nav.steps-nav{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border);
+    display:flex;gap:4px;overflow-x:auto;padding:10px 12px;}
+  nav.steps-nav a{flex-shrink:0;text-decoration:none;color:var(--text-soft);font-size:12.5px;padding:7px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);white-space:nowrap;}
+  nav.steps-nav a:hover{border-color:var(--primary);color:var(--primary-dark);}
+
+  main{max-width:720px;margin:0 auto;padding:24px 16px 70px;}
+
+  .step{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 22px 20px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.05);scroll-margin-top:60px;}
+  .step-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .step-num{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;}
+  .step-head h2{margin:0;font-size:16.5px;color:var(--primary-dark);}
+  .step-body p{margin:0 0 10px;font-size:14px;}
+  .step-body ol,.step-body ul{margin:0 0 10px;padding-left:20px;font-size:14px;}
+  .step-body li{margin-bottom:6px;}
+
+  .box{border-radius:10px;padding:12px 14px;font-size:13px;margin:10px 0;}
+  .box.tip{background:#F0F5EE;border:1px solid #D7E4D2;color:#4E5E4A;}
+  .box.warn{background:#FBF2E4;border:1px solid #EED9B8;color:#6B5230;}
+  .box.note{background:var(--bg);border:1px solid var(--border);color:var(--text-soft);}
+  .box b{color:inherit;}
+
+  .code-wrap{position:relative;margin:10px 0;}
+  pre{background:#2C2620;color:#EDE6DA;padding:14px 16px;border-radius:10px;font-size:12.5px;overflow-x:auto;margin:0;line-height:1.6;}
+  .copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.12);color:#EDE6DA;border:none;padding:5px 10px;border-radius:6px;font-size:11px;cursor:pointer;}
+  .copy-btn:hover{background:rgba(255,255,255,0.22);}
+
+  table.field-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0;}
+  table.field-table th,table.field-table td{border:1px solid var(--border);padding:8px 9px;text-align:left;vertical-align:top;}
+  table.field-table th{background:var(--bg);color:var(--text-soft);font-weight:600;}
+
+  .checklist{list-style:none;padding:0;margin:0;}
+  .checklist li{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-bottom:8px;}
+  .checklist li::before{content:'✓';color:var(--ok);font-weight:700;flex-shrink:0;}
+
+  .img-slot{margin:12px 0;display:flex;flex-wrap:wrap;gap:10px;}
+  .img-slot img{display:block;width:calc(50% - 5px);max-width:260px;border-radius:10px;border:1px solid var(--border);cursor:zoom-in;}
+  .img-placeholder{border:2px dashed var(--border);border-radius:10px;padding:26px 14px;text-align:center;color:var(--text-soft);font-size:12.5px;background:var(--bg);width:100%;}
+
+  footer{text-align:center;padding:20px;font-size:12px;color:var(--text-soft);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>連接 Firebase 雲端同步・逐步教學</h1>
+  <p>照著下面 8 個步驟做，就能讓你的庫存系統支援多裝置即時同步</p>
+</header>
+
+<nav class="steps-nav">
+  <a href="#step1">1. 建立專案</a>
+  <a href="#step2">2. Firestore</a>
+  <a href="#step3">3. 匿名登入</a>
+  <a href="#step4">4. 取得設定值</a>
+  <a href="#step5">5. 貼進模板</a>
+  <a href="#step6">6. 正式規則</a>
+  <a href="#step7">7. 測試同步</a>
+  <a href="#step8">8. 選填保護</a>
+</nav>
+
+<main>
+
+  <div class="box note">
+    <b>開始前你需要：</b>一個 Google 帳號、幾分鐘時間、還有這份庫存管理系統模板的網頁打開在另一個分頁。整個過程不需要寫任何程式碼，全部用滑鼠點選跟複製貼上就能完成。
+  </div>
+
+  <div class="step" id="step1">
+    <div class="step-head"><div class="step-num">1</div><h2>建立 Firebase 專案</h2></div>
+    <div class="step-body">
+      <ol>
+        <li>前往 <b>console.firebase.google.com</b>，用 Google 帳號登入</li>
+        <li>點「新增專案」，輸入專案名稱（例如：我的庫存系統）</li>
+        <li>Google Analytics 選「不啟用」即可，跟這個系統的功能完全無關</li>
+        <li>按「建立專案」，等待幾秒後會進入專案主控台</li>
+      </ol>
+      <div class="box tip">💡 專案名稱可以隨便取，之後看得懂就好，跟你的商店名稱、網址都沒有關係。</div>
+      <div class="img-slot" data-step="1">
+        <img src="images/step1-1.png" alt="步驟1截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,1)">
+        <img src="images/step1-2.png" alt="步驟1截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,1)">
+        <img src="images/step1-3.png" alt="步驟1截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,1)">
+        <img src="images/step1-4.png" alt="步驟1截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,1)">
+        <img src="images/step1-5.png" alt="步驟1截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,1)">
+        <img src="images/step1-6.png" alt="步驟1截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,1)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step2">
+    <div class="step-head"><div class="step-num">2</div><h2>開啟 Firestore Database</h2></div>
+    <div class="step-body">
+      <ol>
+        <li>左側選單點「Firestore Database」</li>
+        <li>點「建立資料庫」</li>
+        <li>位置選離你最近的機房（<b>asia-east1</b> 台灣，或 <b>asia-northeast1</b> 東京都可以）</li>
+        <li>安全性規則先選「<b>測試模式</b>」——這樣才能先確認功能正常，第 6 步再改成正式規則</li>
+      </ol>
+      <div class="box warn">⚠️ 測試模式代表「任何人都能讀寫」，只是暫時的，記得回來做第 6 步。</div>
+      <div class="img-slot" data-step="2">
+        <img src="images/step2-1.png" alt="步驟2截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,2)">
+        <img src="images/step2-2.png" alt="步驟2截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,2)">
+        <img src="images/step2-3.png" alt="步驟2截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,2)">
+        <img src="images/step2-4.png" alt="步驟2截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,2)">
+        <img src="images/step2-5.png" alt="步驟2截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,2)">
+        <img src="images/step2-6.png" alt="步驟2截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,2)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step3">
+    <div class="step-head"><div class="step-num">3</div><h2>開啟「匿名」登入</h2></div>
+    <div class="step-body">
+      <p>這一步讓每台裝置能自動、安全地讀寫資料，不需要員工另外註冊帳號密碼。</p>
+      <ol>
+        <li>左側選單點「Authentication」</li>
+        <li>點「開始使用」（或「Sign-in method」分頁）</li>
+        <li>在登入方式清單裡找到「<b>匿名</b>」，點進去選「啟用」，按儲存</li>
+      </ol>
+      <div class="box tip">💡 「自動清理」那個選項可以勾選，會自動清掉超過 30 天沒用的匿名帳號，對這個系統沒有壞處。</div>
+      <div class="img-slot" data-step="3">
+        <img src="images/step3-1.png" alt="步驟3截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,3)">
+        <img src="images/step3-2.png" alt="步驟3截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,3)">
+        <img src="images/step3-3.png" alt="步驟3截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,3)">
+        <img src="images/step3-4.png" alt="步驟3截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,3)">
+        <img src="images/step3-5.png" alt="步驟3截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,3)">
+        <img src="images/step3-6.png" alt="步驟3截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,3)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step4">
+    <div class="step-head"><div class="step-num">4</div><h2>取得六個連線設定值</h2></div>
+    <div class="step-body">
+      <ol>
+        <li>主控台左上角齒輪圖示 →「專案設定」</li>
+        <li>往下捲到「你的應用程式」，點 <b>&lt;/&gt;</b> 新增網頁應用程式（名稱隨意）</li>
+        <li>選擇「使用 <code>&lt;script&gt;</code> 標記」（不要選 npm）</li>
+        <li>畫面會顯示一段程式碼，裡面的 <code>firebaseConfig</code> 就是你要的六個值</li>
+      </ol>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode('cfgExample')">複製範例</button>
+        <pre id="cfgExample">const firebaseConfig = {
+  apiKey: "AIzaSyD-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  authDomain: "my-project-12345.firebaseapp.com",
+  projectId: "my-project-12345",
+  storageBucket: "my-project-12345.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:a1b2c3d4e5f6g7h8"
+};</pre>
+      </div>
+      <table class="field-table">
+        <tr><th>欄位</th><th>這是什麼</th></tr>
+        <tr><td>apiKey</td><td>對外溝通用的識別金鑰（不是密碼）</td></tr>
+        <tr><td>authDomain</td><td>登入功能使用的網域，固定格式</td></tr>
+        <tr><td>projectId</td><td>你這個專案的唯一 ID</td></tr>
+        <tr><td>storageBucket</td><td>檔案儲存位置（這個模板沒用到，照抄即可）</td></tr>
+        <tr><td>messagingSenderId</td><td>推播用的編號（這個模板沒用到，照抄即可）</td></tr>
+        <tr><td>appId</td><td>這個網頁應用程式的唯一識別碼</td></tr>
+      </table>
+      <div class="box warn">⚠️ 複製時只拿雙引號「裡面」的內容，不要把引號本身也複製進去。</div>
+      <div class="img-slot" data-step="4">
+        <img src="images/step4-1.png" alt="步驟4截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,4)">
+        <img src="images/step4-2.png" alt="步驟4截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,4)">
+        <img src="images/step4-3.png" alt="步驟4截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,4)">
+        <img src="images/step4-4.png" alt="步驟4截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,4)">
+        <img src="images/step4-5.png" alt="步驟4截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,4)">
+        <img src="images/step4-6.png" alt="步驟4截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,4)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step5">
+    <div class="step-head"><div class="step-num">5</div><h2>貼進模板的「設定」頁</h2></div>
+    <div class="step-body">
+      <p>回到你的庫存管理系統模板網頁，這一步完全不用碰程式碼：</p>
+      <ol>
+        <li>切到「<b>設定</b>」分頁，找到「連接我的 Firebase」區塊</li>
+        <li>把上一步的六個值，依欄位名稱逐一貼上（apiKey、authDomain、projectId、storageBucket、messagingSenderId、appId）</li>
+        <li>按下「<b>連接並啟用雲端同步</b>」</li>
+        <li>上方狀態文字如果變成「已連接，雲端同步中」，就代表成功了</li>
+      </ol>
+      <div class="box tip">💡 六個值貼好之後，這個區塊之後會自動收合成一行摘要，不會一直佔畫面。</div>
+      <div class="img-slot" data-step="5">
+        <img src="images/step5-1.png" alt="步驟5截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,5)">
+        <img src="images/step5-2.png" alt="步驟5截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,5)">
+        <img src="images/step5-3.png" alt="步驟5截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,5)">
+        <img src="images/step5-4.png" alt="步驟5截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,5)">
+        <img src="images/step5-5.png" alt="步驟5截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,5)">
+        <img src="images/step5-6.png" alt="步驟5截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,5)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step6">
+    <div class="step-head"><div class="step-num">6</div><h2>把安全規則換成正式版</h2></div>
+    <div class="step-body">
+      <p>在測試多裝置同步之前，先把第 2 步的「測試模式」換成正式規則——如果規則設定錯誤（例如不小心選到完全鎖住讀寫的模式），下一步測試同步時就會失敗，畫面看起來會像是登入失敗、看不到任何資料，其實是規則擋住的。</p>
+      <ol>
+        <li>回到 Firestore Database →「規則」分頁</li>
+        <li>把整段規則換成下面這段：</li>
+      </ol>
+      <div class="code-wrap">
+        <button class="copy-btn" onclick="copyCode('rulesCode')">複製規則</button>
+        <pre id="rulesCode">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre>
+      </div>
+      <ol start="3">
+        <li>按右上角「發布」，等幾秒生效</li>
+        <li>回到模板重新整理，確認資料還能正常讀寫（因為你已經有匿名登入，不受影響）</li>
+      </ol>
+      <div class="box warn">⚠️ 如果建立資料庫時不小心選到「正式／鎖定模式」，規則預設會是 <code>allow read, write: if false;</code>——代表所有人（包含你自己）都讀寫不了，狀態會顯示「連接失敗：Missing or insufficient permissions」。不管你當初選了測試模式還是鎖定模式，把規則整段換成上面這段就對了。</div>
+      <div class="box note">這段規則的意思是「只有登入過的人（含匿名登入）能讀寫」，比測試模式安全很多，但仍然只要知道連線設定值就能存取——請不要把六個值隨便外流。</div>
+      <div class="img-slot" data-step="6">
+        <img src="images/step6-1.png" alt="步驟6截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,6)">
+        <img src="images/step6-2.png" alt="步驟6截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,6)">
+        <img src="images/step6-3.png" alt="步驟6截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,6)">
+        <img src="images/step6-4.png" alt="步驟6截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,6)">
+        <img src="images/step6-5.png" alt="步驟6截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,6)">
+        <img src="images/step6-6.png" alt="步驟6截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,6)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step7">
+    <div class="step-head"><div class="step-num">7</div><h2>測試多裝置同步</h2></div>
+    <div class="step-body">
+      <ol>
+        <li>用手機或另一台電腦打開<b>同一個</b>模板網址</li>
+        <li>一樣到「設定」貼上<b>同一組</b>六個值，按連接</li>
+        <li>在其中一邊新增一筆商品或紀錄</li>
+        <li>幾秒內另一邊應該會自動更新出現同一筆資料</li>
+      </ol>
+      <div class="box note">如果想確認資料真的有存到雲端，可以到 Firebase 主控台的 Firestore Database 頁面，應該會看到一個叫 <code>inventory_template_data</code> 的集合，裡面有一份 <code>main</code> 文件。</div>
+      <div class="img-slot" data-step="7">
+        <img src="images/step7-1.png" alt="步驟7截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,7)">
+        <img src="images/step7-2.png" alt="步驟7截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,7)">
+        <img src="images/step7-3.png" alt="步驟7截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,7)">
+        <img src="images/step7-4.png" alt="步驟7截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,7)">
+        <img src="images/step7-5.png" alt="步驟7截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,7)">
+        <img src="images/step7-6.png" alt="步驟7截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,7)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="step8">
+    <div class="step-head"><div class="step-num">8</div><h2>（選填）加一層畫面保護</h2></div>
+    <div class="step-body">
+      <p>如果不想讓一般員工不小心誤觸雲端連線設定，可以在模板「設定」頁最上面設定一組「管理密碼」：</p>
+      <ol>
+        <li>找到「管理密碼」區塊，輸入一組密碼並儲存</li>
+        <li>設定後，「連接我的 Firebase」跟「清除所有資料」兩個區塊會先隱藏，需要輸入密碼才能查看</li>
+      </ol>
+      <div class="box note">提醒：這只是畫面層級的簡易防呆，不是真正的帳號登入系統，密碼是存在裝置本機的。</div>
+      <div class="img-slot" data-step="8">
+        <img src="images/step8-1.png" alt="步驟8截圖1" onclick="window.open(this.src)" onerror="imgSlotError(this,8)">
+        <img src="images/step8-2.png" alt="步驟8截圖2" onclick="window.open(this.src)" onerror="imgSlotError(this,8)">
+        <img src="images/step8-3.png" alt="步驟8截圖3" onclick="window.open(this.src)" onerror="imgSlotError(this,8)">
+        <img src="images/step8-4.png" alt="步驟8截圖4" onclick="window.open(this.src)" onerror="imgSlotError(this,8)">
+        <img src="images/step8-5.png" alt="步驟8截圖5" onclick="window.open(this.src)" onerror="imgSlotError(this,8)">
+        <img src="images/step8-6.png" alt="步驟8截圖6" onclick="window.open(this.src)" onerror="imgSlotError(this,8)">
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="checklist" style="border-color:var(--primary);">
+    <div class="step-head"><div class="step-num">✓</div><h2>完成檢查清單</h2></div>
+    <div class="step-body">
+      <ul class="checklist">
+        <li>Firebase 專案已建立</li>
+        <li>Firestore 資料庫已建立</li>
+        <li>Authentication 的「匿名」已啟用</li>
+        <li>六個設定值已貼進模板「設定」頁並顯示連接成功</li>
+        <li>安全規則已從測試模式換成正式規則並發布</li>
+        <li>多裝置測試過會自動同步</li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<footer>如果卡在某一步，把該畫面截圖丟給協助你的人，會比文字描述更快找到問題。</footer>
+
+<script>
+function copyCode(id){
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = event.target;
+    const original = btn.textContent;
+    btn.textContent = '已複製！';
+    setTimeout(()=>{ btn.textContent = original; }, 1500);
+  }).catch(()=>{});
+}
+function imgSlotError(imgEl, stepNum){
+  imgEl.style.display = 'none';
+  imgEl.dataset.failed = '1';
+  const container = imgEl.closest('.img-slot');
+  const allImgs = container.querySelectorAll('img');
+  const allFailed = Array.from(allImgs).every(i => i.dataset.failed === '1');
+  if(allFailed && !container.querySelector('.img-placeholder')){
+    const placeholder = document.createElement('div');
+    placeholder.className = 'img-placeholder';
+    placeholder.textContent = `尚未加入截圖（把圖檔存成 images/step${stepNum}-1.png、images/step${stepNum}-2.png...依序放進 images 資料夾，最多可以放 6 張，會自動依序顯示）`;
+    container.appendChild(placeholder);
+  }
+}
+</script>
+
+</body>
+</html>
