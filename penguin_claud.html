@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>庫存管理系統・雲端多店版</title>
+<title>多店庫存同步管理</title>
 <style>
   :root{
     --primary:#A8998A; --primary-dark:#8C7C6E; --accent:#C9A66B;
@@ -1310,7 +1310,11 @@ function renderAll(){
   renderProducts();
   renderRecords();
   renderThemeSwatches();
+  const titleText = (db.settings.brandName && db.settings.brandName !== '名字')
+    ? `${db.settings.brandName}・多店庫存同步管理`
+    : '多店庫存同步管理';
   document.getElementById('headerTitle').textContent = (db.settings.brandName || '名字') + '・多店庫存同步管理';
+  document.title = titleText;
   document.getElementById('brandNameInput').value = db.settings.brandName || '名字';
 }
 
@@ -1407,6 +1411,7 @@ function init(){
     db.settings.brandName = document.getElementById('brandNameInput').value.trim() || '名字';
     saveDB();
     document.getElementById('headerTitle').textContent = db.settings.brandName + '・多店庫存同步管理';
+    document.title = (db.settings.brandName !== '名字') ? `${db.settings.brandName}・多店庫存同步管理` : '多店庫存同步管理';
     showToast('已儲存名稱');
   });
   document.getElementById('addStoreBtn').addEventListener('click', ()=>{
