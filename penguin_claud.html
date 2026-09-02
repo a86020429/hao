@@ -95,6 +95,7 @@
   <button data-tab="productlist">商品清單</button>
   <button data-tab="products">新增商品</button>
   <button data-tab="entry">新增紀錄</button>
+  <button data-tab="records">紀錄查詢</button>
   <button data-tab="settings">設定</button>
 </nav>
 
@@ -203,6 +204,34 @@
         <button class="btn" id="submitTxnBatchBtn">送出全部紀錄</button>
       </div>
       <div class="hint">每一列可以「從商品清單選擇」或直接「自訂名稱」（自訂名稱不會影響任何商品的庫存數字，純粹留紀錄）。同一批送出的紀錄會套用同一個日期／店家／原因等設定。</div>
+    </div>
+  </div>
+
+  <!-- 紀錄查詢 -->
+  <div class="tabpage" id="tab-records">
+    <div class="card">
+      <h2>異動紀錄查詢</h2>
+      <div class="row-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border:none;padding:0;">
+        <div><label>店家</label><select id="recordsStoreFilter"></select></div>
+        <div><label>起始日期</label><input type="date" id="recordsStartDate"></div>
+        <div><label>結束日期</label><input type="date" id="recordsEndDate"></div>
+        <div>
+          <label>類型</label>
+          <select id="recordsTypeFilter">
+            <option value="all">全部類型</option>
+            <option value="in">進貨</option>
+            <option value="out">售出</option>
+            <option value="transfer">調貨</option>
+            <option value="adjust">盤點調整</option>
+            <option value="loss">耗損／保固／瑕疵／退貨／其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="inline-actions" style="margin-bottom:10px;">
+        <button class="btn-outline" id="recordsResetBtn">清除篩選</button>
+      </div>
+      <div class="hint" id="recordsScopeHint" style="margin-bottom:8px;"></div>
+      <div id="recordsResults"><div class="empty">目前沒有符合的紀錄</div></div>
     </div>
   </div>
 
@@ -559,10 +588,11 @@ function refreshStoreSelectsGlobal(){
   db.products.forEach(ensureProductStores);
   const dashSel = document.getElementById('dashboardStoreFilter');
   const listSel = document.getElementById('productListStoreFilter');
+  const recordsSel = document.getElementById('recordsStoreFilter');
   const entrySel = document.getElementById('entryStoreSelect');
   const fromSel = document.getElementById('fromStoreSelect');
   const toSel = document.getElementById('toStoreSelect');
-  [dashSel, listSel].forEach(sel=>{
+  [dashSel, listSel, recordsSel].forEach(sel=>{
     if(!sel) return;
     const cur = sel.value;
     sel.innerHTML = storeOptionsHTML(true);
@@ -704,6 +734,69 @@ function renderDashboard(){
     }
   }
 }
+
+/* ---------- Records search (any date range / type / store) ---------- */
+function renderRecords(){
+  const storeSel = document.getElementById('recordsStoreFilter');
+  const startInput = document.getElementById('recordsStartDate');
+  const endInput = document.getElementById('recordsEndDate');
+  const typeSel = document.getElementById('recordsTypeFilter');
+  const scopeHint = document.getElementById('recordsScopeHint');
+  const resultsWrap = document.getElementById('recordsResults');
+
+  const restricted = !!db.settings.adminPin && !adminUnlocked;
+  const deviceStore = getDeviceStore();
+
+  if(restricted){
+    storeSel.value = deviceStore || '';
+    storeSel.disabled = true;
+    scopeHint.textContent = deviceStore
+      ? `目前僅能查詢本裝置所屬店家「${deviceStore}」的紀錄。輸入管理密碼解鎖後可查詢所有店家。`
+      : '這台裝置尚未指定所屬店家，請先到「設定」頁指定，或輸入管理密碼解鎖查詢所有店家。';
+  }else{
+    storeSel.disabled = false;
+    scopeHint.textContent = '';
+  }
+
+  if(restricted && !deviceStore){
+    resultsWrap.innerHTML = '<div class="empty">請先設定這台裝置所屬店家，或輸入管理密碼解鎖</div>';
+    return;
+  }
+
+  const store = restricted ? deviceStore : (storeSel.value || 'all');
+  const start = startInput.value || null;
+  const end = endInput.value || null;
+  const type = typeSel.value || 'all';
+
+  let list = db.logs.filter(l=>{
+    if(!logMatchesStore(l, store)) return false;
+    if(start && l.date < start) return false;
+    if(end && l.date > end) return false;
+    if(type!=='all' && l.type!==type) return false;
+    return true;
+  });
+  list.sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt);
+
+  if(list.length===0){
+    resultsWrap.innerHTML = '<div class="empty">沒有符合篩選條件的紀錄</div>';
+    return;
+  }
+
+  const CAP = 300;
+  const shown = list.slice(0, CAP);
+  resultsWrap.innerHTML = `
+    ${list.length>CAP ? `<div class="hint" style="margin-bottom:8px;">結果共 ${list.length} 筆，僅顯示最新 ${CAP} 筆，建議縮小日期或類型範圍。</div>` : ''}
+    <table><thead><tr><th>日期</th><th>類型</th><th>店家</th><th>品項</th><th>數量</th><th>備註</th></tr></thead><tbody>
+      ${shown.map(l=>{
+        const name = l.customName ? l.customName+'（自訂）' : productLabel(l.productId);
+        const tc = TYPE_CONFIG[l.type];
+        const dirSign = l.direction==='in' ? '+' : (l.direction==='out' ? '-' : '');
+        return `<tr><td>${esc(l.date)}</td><td><span class="badge" style="background:var(${tc.color})">${esc(typeDisplayLabel(l))}</span></td>
+        <td>${logStoreLabel(l)}</td><td>${esc(name)}</td><td>${dirSign}${l.qty}</td><td>${esc(l.note||'-')}</td></tr>`;
+      }).join('')}
+    </tbody></table>`;
+}
+
 function productLabel(id){
   const p = db.products.find(x=>x.id===id);
   return p ? `${p.series} / ${p.item} / ${p.style}` : '(商品已刪除)';
@@ -1078,6 +1171,7 @@ function tryUnlock(pinValue){
     adminUnlocked = true;
     applyLockUI();
     renderDashboard();
+    renderRecords();
     showToast('已解鎖');
   }else{
     showToast('密碼錯誤');
@@ -1214,6 +1308,7 @@ function switchTab(tab){
 function renderAll(){
   renderDashboard();
   renderProducts();
+  renderRecords();
   renderThemeSwatches();
   document.getElementById('headerTitle').textContent = (db.settings.brandName || '名字') + '・多店庫存同步管理';
   document.getElementById('brandNameInput').value = db.settings.brandName || '名字';
@@ -1257,6 +1352,21 @@ function init(){
   document.getElementById('dashboardDateFilter').value = todayStr();
   document.getElementById('dashboardStoreFilter').addEventListener('change', renderDashboard);
   document.getElementById('dashboardDateFilter').addEventListener('change', renderDashboard);
+
+  // records search tab
+  document.getElementById('recordsStoreFilter').addEventListener('change', renderRecords);
+  document.getElementById('recordsStartDate').addEventListener('change', renderRecords);
+  document.getElementById('recordsEndDate').addEventListener('change', renderRecords);
+  document.getElementById('recordsTypeFilter').addEventListener('change', renderRecords);
+  document.getElementById('recordsResetBtn').addEventListener('click', ()=>{
+    document.getElementById('recordsStartDate').value = '';
+    document.getElementById('recordsEndDate').value = '';
+    document.getElementById('recordsTypeFilter').value = 'all';
+    if(!(!!db.settings.adminPin && !adminUnlocked)){
+      document.getElementById('recordsStoreFilter').value = 'all';
+    }
+    renderRecords();
+  });
 
   // entry tab
   document.getElementById('entryDate').value = todayStr();
@@ -1315,6 +1425,7 @@ function init(){
   document.getElementById('deviceStoreSelect').addEventListener('change', e=>{
     setDeviceStore(e.target.value);
     renderDashboard();
+    renderRecords();
     showToast(e.target.value ? `這台裝置已設為：${e.target.value}` : '已取消這台裝置的店家設定');
   });
   document.getElementById('applyCustomThemeBtn').addEventListener('click', ()=>{
@@ -1354,6 +1465,7 @@ function init(){
     renderAdminPinStatus();
     applyLockUI();
     renderDashboard();
+    renderRecords();
     showToast(val ? '已設定管理密碼' : '已取消密碼保護');
   });
   document.querySelectorAll('[data-unlock-target]').forEach(btn=>{
