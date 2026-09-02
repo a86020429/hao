@@ -77,7 +77,7 @@
 
   table{width:100%;border-collapse:collapse;font-size:13.5px;}
   .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px;}
-  .table-scroll table{min-width:520px;}
+  .table-scroll table{min-width:480px;}
   th{text-align:left;color:var(--text-soft);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12.5px;}
   td{padding:9px 10px;border-bottom:1px solid var(--surface-2);}
   tr:last-child td{border-bottom:none;}
@@ -86,7 +86,6 @@
   .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;letter-spacing:.5px;}
   .badge.in{background:var(--ok-bg);color:#5C7A66;}
   .badge.out{background:#E4E9EC;color:var(--primary-dark);}
-  .badge.transfer{background:#EDE7DC;color:#8A7350;}
   .badge.loss{background:var(--danger-bg);color:#8F5555;}
   .tag{display:inline-block;background:var(--surface-2);color:var(--text-soft);border-radius:6px;padding:2px 7px;font-size:11px;margin-right:4px;}
 
@@ -122,7 +121,7 @@
   /* Product tree */
   .tree-head-row, .prod-row{
     display:grid;
-    grid-template-columns: minmax(180px,1.6fr) 110px 70px 90px 80px minmax(140px,1.3fr) 92px;
+    grid-template-columns: minmax(180px,1.8fr) 110px 70px 90px 90px 92px;
     gap:8px; align-items:center;
   }
   .tree-head-row{padding:0 10px 8px;font-size:12px;color:var(--text-soft);border-bottom:1px solid var(--border);margin-bottom:4px;}
@@ -139,15 +138,6 @@
   .indent-2{padding-left:40px;}
   .group-count{font-size:11.5px;color:var(--text-soft);font-weight:400;}
   .low-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);display:inline-block;margin-left:4px;}
-  .app-footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);text-align:center;color:var(--text-soft);font-size:11px;line-height:1.8;}
-
-  @media(max-width:900px){
-    .tree-head-row{display:none;}
-    .prod-row{grid-template-columns:1fr;gap:2px;padding:10px 10px;}
-    .prod-row.group{grid-template-columns:1fr;}
-    .prod-row > div:not(.prod-name){font-size:12px;color:var(--text-soft);}
-    .prod-row > div.cell-actions{margin-top:6px;}
-  }
 
   /* Modal */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(60,58,52,0.45);z-index:100;align-items:center;justify-content:center;padding:20px;}
@@ -173,6 +163,16 @@
   #scannerViewport video, #scannerViewport canvas{width:100% !important;height:auto !important;position:absolute;top:0;left:0;}
   .scan-hint{font-size:12.5px;color:var(--text-soft);margin-top:10px;}
 
+  .app-footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);text-align:center;color:var(--text-soft);font-size:11px;line-height:1.8;}
+
+  @media(max-width:900px){
+    .tree-head-row{display:none;}
+    .prod-row{grid-template-columns:1fr;gap:2px;padding:10px 10px;}
+    .prod-row.group{grid-template-columns:1fr;}
+    .prod-row > div:not(.prod-name){font-size:12px;color:var(--text-soft);}
+    .prod-row > div.cell-actions{margin-top:6px;}
+  }
+
   @media(max-width:760px){
     .app{flex-direction:column;}
     .sidebar{
@@ -193,7 +193,6 @@
     .card + .card{margin-top:12px;}
     .row{gap:10px;}
     .row > .field{min-width:0;flex:1 1 100%;}
-    .row.keep-2 > .field{flex:1 1 45%;}
     .btn{padding:10px 14px;}
     .with-btn button{flex-shrink:0;}
     .summary-chip{min-width:44%;}
@@ -207,11 +206,11 @@
 <body>
 <div class="app">
   <div class="sidebar">
-    <div class="brand">庫存管理<span>INVENTORY SYSTEM</span></div>
+    <div class="brand" id="brandLabel">庫存管理<span>INVENTORY SYSTEM</span></div>
     <button class="nav-item active" data-page="dashboard"><span class="nav-dot"></span>首頁</button>
     <button class="nav-item" data-page="records"><span class="nav-dot"></span>新增紀錄</button>
+    <button class="nav-item" data-page="history"><span class="nav-dot"></span>異動紀錄</button>
     <button class="nav-item" data-page="products"><span class="nav-dot"></span>商品管理</button>
-    <button class="nav-item" data-page="locations"><span class="nav-dot"></span>分店/倉庫</button>
     <button class="nav-item" data-page="appearance"><span class="nav-dot"></span>外觀設定</button>
     <button class="nav-item" data-page="data"><span class="nav-dot"></span>資料備份</button>
   </div>
@@ -249,14 +248,13 @@
       <div class="page-head">
         <div>
           <h1>新增紀錄</h1>
-          <div class="subtitle">進貨・售出・調貨・保固/耗損/報廢（可一次加入多筆商品後統一送出）</div>
+          <div class="subtitle">進貨・售出・保固/耗損/報廢（可一次加入多筆商品後統一送出）</div>
         </div>
       </div>
 
       <div class="tabs" id="recordTabs">
         <button class="tab active" data-type="in">進貨</button>
         <button class="tab" data-type="out">售出</button>
-        <button class="tab" data-type="transfer">調貨</button>
         <button class="tab" data-type="loss">保固/耗損/報廢</button>
       </div>
 
@@ -291,6 +289,47 @@
       </div>
     </div>
 
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="page-head">
+        <div>
+          <h1>異動紀錄</h1>
+          <div class="subtitle">依日期區間、類型或商品名稱查詢所有進出貨紀錄</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div class="field"><label>起始日期</label><input type="date" id="hist_startDate"></div>
+          <div class="field"><label>結束日期</label><input type="date" id="hist_endDate"></div>
+          <div class="field">
+            <label>類型</label>
+            <select id="hist_type">
+              <option value="">全部類型</option>
+              <option value="in">進貨</option>
+              <option value="out">售出</option>
+              <option value="warranty">保固</option>
+              <option value="damage">耗損</option>
+              <option value="scrap">報廢</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>搜尋商品名稱／備註</label>
+          <input type="text" id="hist_keyword" placeholder="輸入系列、品項、款式或備註關鍵字">
+        </div>
+        <button type="button" class="btn secondary sm" id="histResetBtn">清除篩選</button>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;">查詢結果</h3>
+          <span id="historyCount" style="font-size:12.5px;color:var(--text-soft);"></span>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+
     <!-- PRODUCTS -->
     <div class="page" id="page-products">
       <div class="page-head">
@@ -310,25 +349,10 @@
           <div>條碼</div>
           <div>單位</div>
           <div>安全庫存</div>
-          <div>總庫存</div>
-          <div>各據點庫存</div>
+          <div>目前庫存</div>
           <div></div>
         </div>
         <div id="productTree"></div>
-      </div>
-    </div>
-
-    <!-- LOCATIONS -->
-    <div class="page" id="page-locations">
-      <div class="page-head">
-        <div>
-          <h1>分店 / 倉庫管理</h1>
-          <div class="subtitle">新增據點以支援調貨功能</div>
-        </div>
-        <button class="btn" id="addLocationBtn">+ 新增據點</button>
-      </div>
-      <div class="card">
-        <div id="locationList"></div>
       </div>
     </div>
 
@@ -338,6 +362,15 @@
         <div>
           <h1>外觀設定</h1>
           <div class="subtitle">預設為莫蘭迪灰藍色系，可自行調整喜歡的顏色</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:10px;">店家名稱</h3>
+        <p style="color:var(--text-soft);font-size:13px;margin:0 0 14px;">會顯示在左側選單最上方，方便識別是哪一間店在使用。</p>
+        <div class="with-btn" style="max-width:360px;">
+          <input type="text" id="storeNameInput" placeholder="例如：小企鵝手機殼">
+          <button class="btn" id="saveStoreNameBtn">儲存</button>
         </div>
       </div>
 
@@ -373,7 +406,7 @@
 
       <div class="card">
         <h3 style="margin-bottom:6px;">匯出備份</h3>
-        <p style="color:var(--text-soft);font-size:13px;margin:0 0 14px;">將目前所有商品、據點、進出貨紀錄與外觀設定打包成一個檔案下載，日後可用來還原。</p>
+        <p style="color:var(--text-soft);font-size:13px;margin:0 0 14px;">將目前所有商品與進出貨紀錄打包成一個檔案下載，日後可用來還原。</p>
         <button class="btn" id="exportBackupBtn">⬇ 匯出備份檔（.json）</button>
       </div>
 
@@ -386,7 +419,7 @@
       <div class="card" style="border-color:#DDBBBB;">
         <h3 style="color:var(--danger);margin-bottom:6px;">清除所有資料</h3>
         <p style="color:var(--text-soft);font-size:13px;margin:0 0 14px;">
-          會清空目前所有商品、據點與進出貨紀錄，恢復成初始狀態，<strong style="color:var(--danger);">此動作無法復原</strong>。強烈建議清除前先匯出一份備份。
+          會清空目前所有商品與進出貨紀錄，恢復成初始狀態，<strong style="color:var(--danger);">此動作無法復原</strong>。強烈建議清除前先匯出一份備份。
         </p>
         <button class="btn danger" id="clearAllDataBtn">🗑 清除所有資料</button>
       </div>
@@ -440,6 +473,10 @@
           <input type="number" id="pf_safety" min="0" value="0">
         </div>
       </div>
+      <div class="field">
+        <label>目前庫存</label>
+        <input type="number" id="pf_stock" min="0" value="0">
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" onclick="closeProductModal()">取消</button>
         <button type="submit" class="btn">儲存</button>
@@ -480,8 +517,9 @@
 
 <script>
 /* ---------- State ---------- */
-const STORAGE_KEY = 'inv_system_state_v2';
+const STORAGE_KEY = 'inv_system_state_v3';
 const THEME_KEY = 'inv_system_theme_v1';
+const STORE_NAME_KEY = 'inv_system_storename_v1';
 
 const DEFAULT_THEME = {
   bg:'#E7E8E6', surface:'#F5F5F3', primary:'#6E8699', primaryDark:'#55697A',
@@ -496,24 +534,52 @@ const PRESETS = [
   {name:'深灰藍夜', bg:'#DDE1E4', surface:'#EEF0F2', primary:'#4F6B80', primaryDark:'#374B5C', secondary:'#8FA0AC', alert:'#B07A55'}
 ];
 
+function migrateProducts(products){
+  return (products||[]).map(p=>{
+    let stock = p.stock;
+    if(stock && typeof stock === 'object'){
+      stock = Object.values(stock).reduce((a,b)=>a+(b||0),0);
+    }
+    if(typeof stock !== 'number' || isNaN(stock)) stock = 0;
+    return {
+      id: p.id || uid('prod'),
+      series: p.series || p.name || '',
+      model: p.model || '',
+      style: p.style || '',
+      barcode: p.barcode || '',
+      unit: p.unit || '件',
+      safetyStock: p.safetyStock || 0,
+      stock
+    };
+  });
+}
+function migrateTransactions(transactions){
+  return (transactions||[]).filter(t=>t.type!=='transfer').map(t=>({
+    id: t.id || uid('tx'),
+    type: t.type,
+    subtype: t.subtype,
+    date: t.date,
+    productId: t.productId,
+    productName: t.productName,
+    qty: t.qty,
+    note: t.note||'',
+    ts: t.ts || Date.now()
+  }));
+}
+
 function loadState(){
   const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw) return JSON.parse(raw);
-  // migrate from v1 if present
-  const oldRaw = localStorage.getItem('inv_system_state_v1');
+  if(raw){
+    const data = JSON.parse(raw);
+    return { products: migrateProducts(data.products), transactions: migrateTransactions(data.transactions) };
+  }
+  // migrate from older multi-location versions if present
+  const oldRaw = localStorage.getItem('inv_system_state_v2') || localStorage.getItem('inv_system_state_v1');
   if(oldRaw){
     const old = JSON.parse(oldRaw);
-    old.products = (old.products||[]).map(p=>({
-      id:p.id, series:p.name||'', model:'', style:'', barcode:'',
-      unit:p.unit||'件', safetyStock:p.safetyStock||0, stock:p.stock||{}
-    }));
-    return old;
+    return { products: migrateProducts(old.products), transactions: migrateTransactions(old.transactions) };
   }
-  return {
-    locations:[{id:'loc_main', name:'總店'}],
-    products:[],
-    transactions:[]
-  };
+  return { products:[], transactions:[] };
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
@@ -523,8 +589,12 @@ function loadTheme(){
 }
 function saveTheme(){ localStorage.setItem(THEME_KEY, JSON.stringify(theme)); applyThemeVars(); }
 
+function loadStoreName(){ return localStorage.getItem(STORE_NAME_KEY) || ''; }
+function saveStoreName(name){ localStorage.setItem(STORE_NAME_KEY, name); }
+
 let state = loadState();
 let theme = loadTheme();
+let storeName = loadStoreName();
 
 function uid(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4); }
 function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
@@ -561,6 +631,24 @@ function renderPresets(){
   });
 }
 
+/* ---------- Store name ---------- */
+function renderBrand(){
+  const el = document.getElementById('brandLabel');
+  if(storeName){
+    el.innerHTML = `${escapeHtml(storeName)}<span>INVENTORY SYSTEM</span>`;
+  }else{
+    el.innerHTML = `庫存管理<span>INVENTORY SYSTEM</span>`;
+  }
+  const input = document.getElementById('storeNameInput');
+  if(input) input.value = storeName;
+}
+document.getElementById('saveStoreNameBtn').addEventListener('click', ()=>{
+  storeName = document.getElementById('storeNameInput').value.trim();
+  saveStoreName(storeName);
+  renderBrand();
+  alert('已儲存店家名稱');
+});
+
 /* ---------- Navigation ---------- */
 document.querySelectorAll('.nav-item').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -570,8 +658,8 @@ document.querySelectorAll('.nav-item').forEach(btn=>{
     document.getElementById('page-'+btn.dataset.page).classList.add('active');
     if(btn.dataset.page==='dashboard') renderDashboard();
     if(btn.dataset.page==='records') renderRecordForm();
+    if(btn.dataset.page==='history') renderHistoryPage();
     if(btn.dataset.page==='products') renderProducts();
-    if(btn.dataset.page==='locations') renderLocations();
   });
 });
 
@@ -586,37 +674,23 @@ function findProductByBarcode(code){
 }
 
 /* ---------- Stock helpers ---------- */
-function getStock(productId, locationId){
-  const p = state.products.find(x=>x.id===productId);
-  if(!p) return 0;
-  return p.stock && p.stock[locationId] ? p.stock[locationId] : 0;
-}
-function setStock(productId, locationId, val){
+function totalStock(p){ return p.stock || 0; }
+function adjustStock(productId, delta){
   const p = state.products.find(x=>x.id===productId);
   if(!p) return;
-  if(!p.stock) p.stock = {};
-  p.stock[locationId] = val;
-}
-function totalStock(p){
-  if(!p.stock) return 0;
-  return Object.values(p.stock).reduce((a,b)=>a+b,0);
-}
-function adjustStock(productId, locationId, delta){
-  setStock(productId, locationId, getStock(productId, locationId) + delta);
+  p.stock = (p.stock||0) + delta;
 }
 
 /* ---------- Transaction apply / revert ---------- */
 function applyTransaction(tx){
-  if(tx.type==='in'){ adjustStock(tx.productId, tx.locationId, tx.qty); }
-  else if(tx.type==='out'){ adjustStock(tx.productId, tx.locationId, -tx.qty); }
-  else if(tx.type==='transfer'){ adjustStock(tx.productId, tx.fromLocationId, -tx.qty); adjustStock(tx.productId, tx.toLocationId, tx.qty); }
-  else if(tx.type==='loss'){ adjustStock(tx.productId, tx.locationId, -tx.qty); }
+  if(tx.type==='in'){ adjustStock(tx.productId, tx.qty); }
+  else if(tx.type==='out'){ adjustStock(tx.productId, -tx.qty); }
+  else if(tx.type==='loss'){ adjustStock(tx.productId, -tx.qty); }
 }
 function revertTransaction(tx){
-  if(tx.type==='in'){ adjustStock(tx.productId, tx.locationId, -tx.qty); }
-  else if(tx.type==='out'){ adjustStock(tx.productId, tx.locationId, tx.qty); }
-  else if(tx.type==='transfer'){ adjustStock(tx.productId, tx.fromLocationId, tx.qty); adjustStock(tx.productId, tx.toLocationId, -tx.qty); }
-  else if(tx.type==='loss'){ adjustStock(tx.productId, tx.locationId, tx.qty); }
+  if(tx.type==='in'){ adjustStock(tx.productId, -tx.qty); }
+  else if(tx.type==='out'){ adjustStock(tx.productId, tx.qty); }
+  else if(tx.type==='loss'){ adjustStock(tx.productId, tx.qty); }
 }
 function deleteTransaction(id){
   const tx = state.transactions.find(t=>t.id===id);
@@ -627,10 +701,11 @@ function deleteTransaction(id){
   saveState();
   renderRecordForm();
   renderDashboard();
+  renderHistoryPage();
 }
 
 /* ---------- Labels ---------- */
-const TYPE_LABEL = {in:'進貨', out:'售出', transfer:'調貨', loss:'耗損/報廢'};
+const TYPE_LABEL = {in:'進貨', out:'售出', loss:'耗損/報廢'};
 const LOSS_SUBTYPE_LABEL = {warranty:'保固', damage:'耗損', scrap:'報廢'};
 
 /* ---------- Dashboard ---------- */
@@ -683,13 +758,12 @@ function renderDashboard(){
   }
 
   const dayTx = state.transactions.filter(t=>t.date===date).sort((a,b)=>b.ts-a.ts);
-  const counts = {in:0,out:0,transfer:0,loss:0};
+  const counts = {in:0,out:0,loss:0};
   dayTx.forEach(t=>counts[t.type]+=t.qty);
 
   document.getElementById('summaryRow').innerHTML = `
     <div class="summary-chip"><div class="num">${counts.in}</div><div class="lbl">進貨數量</div></div>
     <div class="summary-chip"><div class="num">${counts.out}</div><div class="lbl">售出數量</div></div>
-    <div class="summary-chip"><div class="num">${counts.transfer}</div><div class="lbl">調貨數量</div></div>
     <div class="summary-chip"><div class="num">${counts.loss}</div><div class="lbl">保固/耗損/報廢</div></div>
   `;
 
@@ -697,29 +771,21 @@ function renderDashboard(){
   if(dayTx.length===0){
     list.innerHTML = '<div class="empty">這天還沒有任何紀錄</div>';
   }else{
-    list.innerHTML = `<div class="table-scroll"><table><thead><tr><th>類型</th><th>商品</th><th>據點</th><th>數量</th><th>備註</th></tr></thead><tbody>
+    list.innerHTML = `<div class="table-scroll"><table><thead><tr><th>類型</th><th>商品</th><th>數量</th><th>備註</th></tr></thead><tbody>
       ${dayTx.map(t=>rowHtml(t)).join('')}
     </tbody></table></div>`;
   }
 }
 function rowHtml(t){
-  let locText = '';
-  if(t.type==='transfer'){
-    locText = `${locName(t.fromLocationId)} → ${locName(t.toLocationId)}`;
-  }else{
-    locText = locName(t.locationId);
-  }
   let typeText = TYPE_LABEL[t.type];
   if(t.type==='loss') typeText = LOSS_SUBTYPE_LABEL[t.subtype] || typeText;
   return `<tr>
     <td><span class="badge ${t.type}">${typeText}</span></td>
     <td>${escapeHtml(t.productName)}</td>
-    <td>${locText}</td>
     <td>${t.qty}</td>
     <td style="color:var(--text-soft);">${escapeHtml(t.note||'')}</td>
   </tr>`;
 }
-function locName(id){ const l = state.locations.find(x=>x.id===id); return l? escapeHtml(l.name) : '－'; }
 
 document.getElementById('dashDate').addEventListener('change', renderDashboard);
 
@@ -753,34 +819,14 @@ function productOptionsGrouped(selected){
     return `<optgroup label="${escapeHtml(series)}">${opts}</optgroup>`;
   }).join('');
 }
-function locationOptions(selected){
-  return state.locations.map(l=>`<option value="${l.id}" ${l.id===selected?'selected':''}>${escapeHtml(l.name)}</option>`).join('');
-}
 
 function renderRecordForm(){
   const today = todayStr();
   const common = document.getElementById('recordCommonFields');
-
-  if(currentRecordType==='transfer'){
-    common.innerHTML = `
-      <div class="row">
-        <div class="field"><label>調出據點</label><select id="cf_fromLocationId">${locationOptions()}</select></div>
-        <div class="field"><label>調入據點</label><select id="cf_toLocationId">${locationOptions(state.locations[1]?.id)}</select></div>
-        <div class="field"><label>日期</label><input type="date" id="cf_date" value="${today}"></div>
-      </div>`;
-  }else if(currentRecordType==='loss'){
-    common.innerHTML = `
-      <div class="row">
-        <div class="field"><label>據點</label><select id="cf_locationId">${locationOptions()}</select></div>
-        <div class="field"><label>日期</label><input type="date" id="cf_date" value="${today}"></div>
-      </div>`;
-  }else{
-    common.innerHTML = `
-      <div class="row">
-        <div class="field"><label>據點</label><select id="cf_locationId">${locationOptions()}</select></div>
-        <div class="field"><label>日期</label><input type="date" id="cf_date" value="${today}"></div>
-      </div>`;
-  }
+  common.innerHTML = `
+    <div class="row">
+      <div class="field"><label>日期</label><input type="date" id="cf_date" value="${today}"></div>
+    </div>`;
 
   const manualRow = document.getElementById('recordManualAddRow');
   const subtypeField = currentRecordType==='loss' ? `
@@ -856,15 +902,6 @@ document.getElementById('submitBatchBtn').addEventListener('click', ()=>{
   if(batchItems.length===0){ alert('清單是空的，請先加入商品'); return; }
   const date = document.getElementById('cf_date').value || todayStr();
   const note = document.getElementById('batchNote').value || '';
-  let fromLocationId, toLocationId, locationId;
-
-  if(currentRecordType==='transfer'){
-    fromLocationId = document.getElementById('cf_fromLocationId').value;
-    toLocationId = document.getElementById('cf_toLocationId').value;
-    if(fromLocationId===toLocationId){ alert('調出與調入據點不可相同'); return; }
-  }else{
-    locationId = document.getElementById('cf_locationId').value;
-  }
 
   batchItems.forEach(item=>{
     const tx = {
@@ -872,9 +909,7 @@ document.getElementById('submitBatchBtn').addEventListener('click', ()=>{
       productId: item.productId, productName: item.productName,
       qty: item.qty, note, ts: Date.now()
     };
-    if(currentRecordType==='transfer'){ tx.fromLocationId = fromLocationId; tx.toLocationId = toLocationId; }
-    else if(currentRecordType==='loss'){ tx.locationId = locationId; tx.subtype = item.subtype; }
-    else{ tx.locationId = locationId; }
+    if(currentRecordType==='loss'){ tx.subtype = item.subtype; }
     applyTransaction(tx);
     state.transactions.push(tx);
   });
@@ -885,6 +920,7 @@ document.getElementById('submitBatchBtn').addEventListener('click', ()=>{
   document.getElementById('recordBarcodeInput').value = '';
   renderBatchList();
   renderRecentList();
+  renderDashboard();
   alert('已送出並更新庫存');
 });
 
@@ -892,15 +928,13 @@ function renderRecentList(){
   const list = document.getElementById('recentList');
   const recent = [...state.transactions].sort((a,b)=>b.ts-a.ts).slice(0,25);
   if(recent.length===0){ list.innerHTML = '<div class="empty">尚無紀錄</div>'; return; }
-  list.innerHTML = `<div class="table-scroll"><table><thead><tr><th>日期</th><th>類型</th><th>商品</th><th>據點</th><th>數量</th><th>備註</th><th></th></tr></thead><tbody>
+  list.innerHTML = `<div class="table-scroll"><table><thead><tr><th>日期</th><th>類型</th><th>商品</th><th>數量</th><th>備註</th><th></th></tr></thead><tbody>
     ${recent.map(t=>{
-      let locText = t.type==='transfer' ? `${locName(t.fromLocationId)} → ${locName(t.toLocationId)}` : locName(t.locationId);
       let typeText = t.type==='loss' ? (LOSS_SUBTYPE_LABEL[t.subtype]||'耗損') : TYPE_LABEL[t.type];
       return `<tr>
         <td>${t.date}</td>
         <td><span class="badge ${t.type}">${typeText}</span></td>
         <td>${escapeHtml(t.productName)}</td>
-        <td>${locText}</td>
         <td>${t.qty}</td>
         <td style="color:var(--text-soft);">${escapeHtml(t.note||'')}</td>
         <td><button class="icon-btn" onclick="deleteTransaction('${t.id}')">✕</button></td>
@@ -934,6 +968,67 @@ document.getElementById('recordScanBtn').addEventListener('click', ()=>{
   });
 });
 
+/* ---------- History page ---------- */
+function getFilteredHistory(){
+  const start = document.getElementById('hist_startDate').value;
+  const end = document.getElementById('hist_endDate').value;
+  const typeFilter = document.getElementById('hist_type').value;
+  const keyword = document.getElementById('hist_keyword').value.trim().toLowerCase();
+
+  return state.transactions.filter(t=>{
+    if(start && t.date < start) return false;
+    if(end && t.date > end) return false;
+    if(typeFilter){
+      if(['warranty','damage','scrap'].includes(typeFilter)){
+        if(t.type!=='loss' || t.subtype!==typeFilter) return false;
+      }else if(t.type!==typeFilter){
+        return false;
+      }
+    }
+    if(keyword){
+      const hay = (t.productName+' '+(t.note||'')).toLowerCase();
+      if(!hay.includes(keyword)) return false;
+    }
+    return true;
+  }).sort((a,b)=>b.ts-a.ts);
+}
+
+function renderHistoryPage(){
+  const results = getFilteredHistory();
+  document.getElementById('historyCount').textContent = `共 ${results.length} 筆`;
+
+  const wrap = document.getElementById('historyList');
+  if(results.length===0){
+    wrap.innerHTML = '<div class="empty">沒有符合條件的紀錄</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="table-scroll"><table><thead><tr><th>日期</th><th>類型</th><th>商品</th><th>數量</th><th>備註</th><th></th></tr></thead><tbody>
+    ${results.map(t=>{
+      const typeText = t.type==='loss' ? (LOSS_SUBTYPE_LABEL[t.subtype]||'耗損') : TYPE_LABEL[t.type];
+      return `<tr>
+        <td>${t.date}</td>
+        <td><span class="badge ${t.type}">${typeText}</span></td>
+        <td>${escapeHtml(t.productName)}</td>
+        <td>${t.qty}</td>
+        <td style="color:var(--text-soft);">${escapeHtml(t.note||'')}</td>
+        <td><button class="icon-btn" onclick="deleteTransaction('${t.id}')">✕</button></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table></div>`;
+}
+
+['hist_startDate','hist_endDate','hist_type','hist_keyword'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderHistoryPage);
+  document.getElementById(id).addEventListener('change', renderHistoryPage);
+});
+document.getElementById('histResetBtn').addEventListener('click', ()=>{
+  document.getElementById('hist_startDate').value = '';
+  document.getElementById('hist_endDate').value = '';
+  document.getElementById('hist_type').value = '';
+  document.getElementById('hist_keyword').value = '';
+  renderHistoryPage();
+});
+
 /* ---------- Products ---------- */
 const expandedSeries = new Set();
 const expandedModels = new Set();
@@ -952,9 +1047,6 @@ function groupProducts(){
   });
   return map;
 }
-function perLocText(p){
-  return state.locations.map(l=>`${escapeHtml(l.name)}: ${getStock(p.id,l.id)}`).join('　');
-}
 function leafRow(p, indentClass, displayLabel){
   const cur = totalStock(p);
   const low = isLowStock(p);
@@ -964,7 +1056,6 @@ function leafRow(p, indentClass, displayLabel){
     <div>${escapeHtml(p.unit||'－')}</div>
     <div>${p.safetyStock||0}</div>
     <div style="${low?'color:var(--danger);font-weight:600;':''}">${cur}</div>
-    <div class="cell-muted">${perLocText(p)}</div>
     <div class="cell-actions" style="white-space:nowrap;">
       <button class="btn secondary sm" onclick="openProductModal('${p.id}')">編輯</button>
       <button class="icon-btn" onclick="deleteProduct('${p.id}')">✕</button>
@@ -997,7 +1088,7 @@ function renderProducts(){
 
     html += `<div class="prod-row group" onclick="toggleSeries('${escapeAttr(seriesName)}')">
       <div class="prod-name"><span class="chevron ${seriesOpen?'open':''}">▸</span>${escapeHtml(seriesName)}<span class="group-count">（${seriesProducts.length} 項）</span>${seriesLow?'<span class="low-dot" title="含低於安全庫存商品"></span>':''}</div>
-      <div></div><div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div>
     </div>`;
 
     if(seriesOpen){
@@ -1008,7 +1099,7 @@ function renderProducts(){
           const modelLow = products.some(isLowStock);
           html += `<div class="prod-row group model-group indent-1" onclick="toggleModel('${escapeAttr(modelKey)}')">
             <div class="prod-name"><span class="chevron ${modelOpen?'open':''}">▸</span>${escapeHtml(modelName)}<span class="group-count">（${products.length} 款式）</span>${modelLow?'<span class="low-dot"></span>':''}</div>
-            <div></div><div></div><div></div><div></div><div></div><div></div>
+            <div></div><div></div><div></div><div></div><div></div>
           </div>`;
           if(modelOpen){
             products.forEach(p=>{
@@ -1038,7 +1129,7 @@ function refreshDatalists(){
   document.getElementById('styleList').innerHTML = styleSet.map(s=>`<option value="${escapeHtml(s)}">`).join('');
 }
 
-function openProductModal(id, prefillBarcode){
+function openProductModal(id){
   editingProductId = id || null;
   refreshDatalists();
   const p = id ? state.products.find(x=>x.id===id) : null;
@@ -1046,9 +1137,10 @@ function openProductModal(id, prefillBarcode){
   document.getElementById('pf_series').value = p ? (p.series||'') : '';
   document.getElementById('pf_model').value = p ? (p.model||'') : '';
   document.getElementById('pf_style').value = p ? (p.style||'') : '';
-  document.getElementById('pf_barcode').value = p ? (p.barcode||'') : (prefillBarcode||'');
+  document.getElementById('pf_barcode').value = p ? (p.barcode||'') : '';
   document.getElementById('pf_unit').value = p ? (p.unit||'件') : '件';
   document.getElementById('pf_safety').value = p ? (p.safetyStock||0) : 0;
+  document.getElementById('pf_stock').value = p ? (p.stock||0) : 0;
   document.getElementById('productModal').classList.add('open');
 }
 function closeProductModal(){
@@ -1068,6 +1160,7 @@ document.getElementById('productForm').addEventListener('submit', (e)=>{
   const barcode = document.getElementById('pf_barcode').value.trim();
   const unit = document.getElementById('pf_unit').value.trim() || '件';
   const safetyStock = parseInt(document.getElementById('pf_safety').value,10) || 0;
+  const stock = parseInt(document.getElementById('pf_stock').value,10) || 0;
 
   if(!series && !model && !style){ alert('請至少填寫系列、品項或款式其中一項'); return; }
   if(barcode){
@@ -1077,15 +1170,14 @@ document.getElementById('productForm').addEventListener('submit', (e)=>{
 
   if(editingProductId){
     const p = state.products.find(x=>x.id===editingProductId);
-    Object.assign(p, {series, model, style, barcode, unit, safetyStock});
+    Object.assign(p, {series, model, style, barcode, unit, safetyStock, stock});
   }else{
-    const p = {id: uid('prod'), series, model, style, barcode, unit, safetyStock, stock:{}};
-    state.locations.forEach(l=> p.stock[l.id]=0 );
-    state.products.push(p);
+    state.products.push({id: uid('prod'), series, model, style, barcode, unit, safetyStock, stock});
   }
   saveState();
   closeProductModal();
   renderProducts();
+  renderDashboard();
 });
 
 function deleteProduct(id){
@@ -1093,6 +1185,7 @@ function deleteProduct(id){
   state.products = state.products.filter(p=>p.id!==id);
   saveState();
   renderProducts();
+  renderDashboard();
 }
 
 /* ---------- Batch product add ---------- */
@@ -1152,7 +1245,7 @@ document.getElementById('saveBatchProductsBtn').addEventListener('click', ()=>{
     const unit = document.getElementById('bp_unit_'+id).value.trim() || '件';
     const safetyStock = parseInt(document.getElementById('bp_safety_'+id).value,10) || 0;
 
-    if(!series && !model && !style && !barcode) continue; // skip fully empty row
+    if(!series && !model && !style && !barcode) continue;
 
     if(!series && !model && !style){
       alert('有一列只填了條碼，請至少補上系列、品項或款式其中一項');
@@ -1170,56 +1263,14 @@ document.getElementById('saveBatchProductsBtn').addEventListener('click', ()=>{
   if(rows.length===0){ alert('請至少填寫一列商品資料'); return; }
 
   rows.forEach(r=>{
-    const p = {id: uid('prod'), ...r, stock:{}};
-    state.locations.forEach(l=> p.stock[l.id]=0 );
-    state.products.push(p);
+    state.products.push({id: uid('prod'), ...r, stock:0});
   });
   saveState();
   closeBatchProductModal();
   renderProducts();
+  renderDashboard();
   alert('已新增 ' + rows.length + ' 項商品');
 });
-
-/* ---------- Locations ---------- */
-function renderLocations(){
-  const wrap = document.getElementById('locationList');
-  if(state.locations.length===0){ wrap.innerHTML = '<div class="empty">尚無據點</div>'; return; }
-  wrap.innerHTML = state.locations.map(l=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--surface-2);">
-      <span>${escapeHtml(l.name)}</span>
-      <div>
-        <button class="btn secondary sm" onclick="renameLocation('${l.id}')">重新命名</button>
-        <button class="icon-btn" onclick="deleteLocation('${l.id}')">✕</button>
-      </div>
-    </div>
-  `).join('');
-}
-document.getElementById('addLocationBtn').addEventListener('click', ()=>{
-  const name = prompt('據點名稱（例如：分店A、中央倉庫）');
-  if(!name || !name.trim()) return;
-  const loc = {id: uid('loc'), name: name.trim()};
-  state.locations.push(loc);
-  state.products.forEach(p=>{ if(!p.stock) p.stock={}; p.stock[loc.id]=0; });
-  saveState();
-  renderLocations();
-});
-function renameLocation(id){
-  const l = state.locations.find(x=>x.id===id);
-  if(!l) return;
-  const name = prompt('據點名稱', l.name);
-  if(!name || !name.trim()) return;
-  l.name = name.trim();
-  saveState();
-  renderLocations();
-}
-function deleteLocation(id){
-  if(state.locations.length<=1){ alert('至少須保留一個據點'); return; }
-  if(!confirm('確定要刪除此據點？該據點的庫存資料將一併移除。')) return;
-  state.locations = state.locations.filter(l=>l.id!==id);
-  state.products.forEach(p=>{ if(p.stock) delete p.stock[id]; });
-  saveState();
-  renderLocations();
-}
 
 /* ---------- Appearance ---------- */
 ['c_primary','c_primaryDark','c_secondary','c_bg','c_surface','c_alert'].forEach(id=>{
@@ -1318,23 +1369,20 @@ function downloadCSV(filename, rows){
 document.getElementById('exportDayCsvBtn').addEventListener('click', ()=>{
   const date = document.getElementById('dashDate').value || todayStr();
   const dayTx = state.transactions.filter(t=>t.date===date).sort((a,b)=>a.ts-b.ts);
-  const rows = [['日期','類型','商品','據點','數量','備註']];
+  const rows = [['日期','類型','商品','數量','備註']];
   dayTx.forEach(t=>{
-    const locText = t.type==='transfer' ? `${locName(t.fromLocationId)}→${locName(t.toLocationId)}` : locName(t.locationId);
     const typeText = t.type==='loss' ? (LOSS_SUBTYPE_LABEL[t.subtype]||'耗損/報廢') : TYPE_LABEL[t.type];
-    rows.push([date, typeText, t.productName, locText, t.qty, t.note||'']);
+    rows.push([date, typeText, t.productName, t.qty, t.note||'']);
   });
-  if(dayTx.length===0) rows.push(['（這天沒有任何紀錄）','','','','','']);
+  if(dayTx.length===0) rows.push(['（這天沒有任何紀錄）','','','','']);
   downloadCSV(`當日明細_${date}.csv`, rows);
 });
 
 document.getElementById('exportProductsCsvBtn').addEventListener('click', ()=>{
-  const header = ['系列','品項','款式','條碼','單位','安全庫存','總庫存', ...state.locations.map(l=>l.name+' 庫存')];
+  const header = ['系列','品項','款式','條碼','單位','安全庫存','目前庫存'];
   const rows = [header];
   state.products.forEach(p=>{
-    const row = [p.series||'', p.model||'', p.style||'', p.barcode||'', p.unit||'', p.safetyStock||0, totalStock(p)];
-    state.locations.forEach(l=> row.push(getStock(p.id, l.id)));
-    rows.push(row);
+    rows.push([p.series||'', p.model||'', p.style||'', p.barcode||'', p.unit||'', p.safetyStock||0, totalStock(p)]);
   });
   if(state.products.length===0) rows.push(['（尚無商品資料）']);
   downloadCSV(`商品清單_${todayStr()}.csv`, rows);
@@ -1342,7 +1390,7 @@ document.getElementById('exportProductsCsvBtn').addEventListener('click', ()=>{
 
 /* ---------- Backup export / import ---------- */
 document.getElementById('exportBackupBtn').addEventListener('click', ()=>{
-  const backup = { type:'inventory_system_backup', version:2, exportedAt:new Date().toISOString(), state, theme };
+  const backup = { type:'inventory_system_backup', version:3, exportedAt:new Date().toISOString(), state, theme, storeName };
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1361,23 +1409,24 @@ document.getElementById('importBackupInput').addEventListener('change', (e)=>{
     catch(err){ alert('讀取檔案失敗，請確認選的是正確的備份檔案（.json）'); e.target.value=''; return; }
 
     const incoming = data.state || data;
-    const looksValid = incoming && Array.isArray(incoming.products) && Array.isArray(incoming.locations) && Array.isArray(incoming.transactions);
+    const looksValid = incoming && Array.isArray(incoming.products) && Array.isArray(incoming.transactions);
     if(!looksValid){
       alert('檔案格式不正確，無法還原');
       e.target.value = '';
       return;
     }
-    if(!confirm('還原備份將覆蓋目前畫面上所有商品、據點與紀錄，確定要繼續嗎？此動作無法復原。')){
+    if(!confirm('還原備份將覆蓋目前畫面上所有商品與紀錄，確定要繼續嗎？此動作無法復原。')){
       e.target.value = '';
       return;
     }
-    state = incoming;
+    state = { products: migrateProducts(incoming.products), transactions: migrateTransactions(incoming.transactions) };
     saveState();
     if(data.theme){ theme = data.theme; saveTheme(); renderThemeInputs(); }
+    if(typeof data.storeName === 'string'){ storeName = data.storeName; saveStoreName(storeName); renderBrand(); }
     renderDashboard();
     renderRecordForm();
+    renderHistoryPage();
     renderProducts();
-    renderLocations();
     alert('已還原備份資料');
     e.target.value = '';
   };
@@ -1385,19 +1434,19 @@ document.getElementById('importBackupInput').addEventListener('change', (e)=>{
 });
 
 document.getElementById('clearAllDataBtn').addEventListener('click', ()=>{
-  if(!confirm('這會清除所有商品、據點與進出貨紀錄，且無法復原。強烈建議先到上方「匯出備份」存一份檔案。確定要繼續嗎？')) return;
+  if(!confirm('這會清除所有商品與進出貨紀錄，且無法復原。強烈建議先到上方「匯出備份」存一份檔案。確定要繼續嗎？')) return;
   const typed = prompt('請輸入「清除」兩個字以確認執行：');
   if(typed !== '清除'){ alert('輸入不符，已取消清除'); return; }
 
-  state = { locations:[{id: uid('loc'), name:'總店'}], products:[], transactions:[] };
+  state = { products:[], transactions:[] };
   saveState();
   expandedSeries.clear();
   expandedModels.clear();
   batchItems = [];
   renderDashboard();
   renderRecordForm();
+  renderHistoryPage();
   renderProducts();
-  renderLocations();
   alert('資料已清除完成');
 });
 
@@ -1409,10 +1458,11 @@ document.getElementById('clearAllDataBtn').addEventListener('click', ()=>{
 applyThemeVars();
 renderThemeInputs();
 renderPresets();
+renderBrand();
 renderDashboard();
 renderRecordForm();
+renderHistoryPage();
 renderProducts();
-renderLocations();
 </script>
 </body>
 </html>
