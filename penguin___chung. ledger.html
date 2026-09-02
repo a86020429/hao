@@ -541,6 +541,19 @@
           <input type="date" id="logRangeEnd" style="display:none;">
         </div>
       </div>
+      <div class="filters" style="margin-top:-4px;">
+        <select id="logTypeFilter">
+          <option value="">全部類型</option>
+          <option value="in">進貨</option>
+          <option value="out_sale">出貨</option>
+          <option value="waste:報廢">報廢</option>
+          <option value="waste:保固">保固</option>
+          <option value="waste:退貨">退貨</option>
+          <option value="combo">組合銷售</option>
+        </select>
+        <select id="logCategoryFilter"><option value="">全部分類</option></select>
+        <select id="logSupplierFilter"><option value="">全部供應商</option></select>
+      </div>
       <p class="muted" id="logCount" style="margin-top:-6px;"></p>
       <div class="table-wrap"><table>
         <thead><tr><th>日期</th><th>商品</th><th>類型</th><th>數量</th><th>單價</th><th>小計</th><th>備註</th><th>操作</th></tr></thead>
@@ -1198,9 +1211,11 @@
     const opts = state.categories.map(c => `<option value="${c}">${c}</option>`).join("");
     document.getElementById("pCategory").innerHTML = opts;
     document.getElementById("filterCategory").innerHTML = `<option value="">全部分類</option>` + opts;
+    document.getElementById("logCategoryFilter").innerHTML = `<option value="">全部分類</option>` + opts;
     const sOpts = state.suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
     document.getElementById("pSupplier").innerHTML = `<option value="">（未指定）</option>` + sOpts;
     document.getElementById("filterSupplier").innerHTML = `<option value="">全部供應商</option>` + sOpts;
+    document.getElementById("logSupplierFilter").innerHTML = `<option value="">全部供應商</option>` + sOpts;
   }
 
   function renderProducts(){
@@ -1572,9 +1587,33 @@
       const d = parseDateOnly(dateStr);
       return d >= range.start && d <= range.end;
     };
+    const typeFilter = document.getElementById("logTypeFilter").value;
+    const catFilter = document.getElementById("logCategoryFilter").value;
+    const supFilter = document.getElementById("logSupplierFilter").value;
+
+    const matchesType = item => {
+      if(!typeFilter) return true;
+      if(item.kind === "combo") return typeFilter === "combo";
+      if(typeFilter === "combo") return false;
+      if(typeFilter.startsWith("waste:")){
+        const reason = typeFilter.split(":")[1];
+        return item.data.type === "out_waste" && (item.data.reason || "報廢") === reason;
+      }
+      return item.data.type === typeFilter;
+    };
+    const matchesCategorySupplier = item => {
+      if(!catFilter && !supFilter) return true;
+      if(item.kind === "combo") return false; // 組合銷售橫跨多項原料，套用分類/供應商篩選時先不顯示
+      const p = state.products.find(p => p.id === item.data.productId);
+      if(!p) return false;
+      if(catFilter && p.category !== catFilter) return false;
+      if(supFilter && p.supplier !== supFilter) return false;
+      return true;
+    };
+
     const filteredLogs = state.logs.filter(l => inRange(l.date));
     const filteredCombos = state.comboSales.filter(s => inRange(s.date));
-    const items = buildCombinedEntries(filteredLogs, filteredCombos);
+    const items = buildCombinedEntries(filteredLogs, filteredCombos).filter(item => matchesType(item) && matchesCategorySupplier(item));
     document.getElementById("logCount").textContent = `共 ${items.length} 筆`;
     body.innerHTML = items.length ? items.map((item, idx) => {
       if(item.kind === "combo"){
@@ -2627,6 +2666,9 @@
 
     wireRangeControls("rangeMode", "rangeStart", "rangeEnd", "rangeSep", renderDashboard);
     wireRangeControls("logRangeMode", "logRangeStart", "logRangeEnd", "logRangeSep", renderLog);
+    document.getElementById("logTypeFilter").onchange = renderLog;
+    document.getElementById("logCategoryFilter").onchange = renderLog;
+    document.getElementById("logSupplierFilter").onchange = renderLog;
     wireRangeControls("expenseRangeMode", "expenseRangeStart", "expenseRangeEnd", "expenseRangeSep", renderExpenseTable);
     document.getElementById("btnSaveExpense").onclick = saveExpense;
     document.getElementById("btnCancelEditExpense").onclick = resetExpenseForm;
