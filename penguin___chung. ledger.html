@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>庫存管理系統 | 初階模板</title>
+<title>庫存進銷系統｜帳目表</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg:#EAE6DF;
@@ -174,7 +175,7 @@
           <span id="storeNameEditable" contenteditable="true" spellcheck="false">您的商店</span>
           <span style="font-weight:600;"> 庫存進銷系統｜帳目表</span>
         </h1>
-        <p>初階模板 — 點一下店名即可直接修改文字</p>
+        <p>點一下店名即可直接修改文字</p>
       </div>
     </div>
     <div class="toolbar">
@@ -301,7 +302,7 @@
         <input type="text" id="searchProduct" placeholder="搜尋商品名稱...">
       </div>
       <div class="table-wrap"><table>
-        <thead><tr><th></th><th>商品名稱</th><th>分類</th><th>供應商</th><th>進貨單價</th><th>庫存</th><th>安全庫存</th><th>狀態</th><th>操作</th></tr></thead>
+        <thead><tr><th>商品名稱</th><th>分類</th><th>供應商</th><th>進貨單價</th><th>庫存</th><th>安全庫存</th><th>狀態</th><th>操作</th></tr></thead>
         <tbody id="productBody"></tbody>
       </table></div>
     </div>
@@ -443,15 +444,6 @@
       </div>
       <input type="hidden" id="editProductId">
 
-      <div class="field">
-        <label>商品照片（選填）</label>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div id="pImagePreview" style="width:56px; height:56px; border-radius:8px; border:1px solid var(--border); background:var(--bg); background-size:cover; background-position:center; flex-shrink:0;"></div>
-          <input type="file" id="pImageFile" accept="image/*" style="flex:1;">
-          <button type="button" class="btn small" id="btnRemoveImage">移除</button>
-        </div>
-      </div>
-
       <div class="grid2">
         <div class="field"><label>商品名稱</label><input type="text" id="pName"></div>
         <div class="field">
@@ -479,13 +471,30 @@
 
     <div class="panel">
       <h2>批次新增商品</h2>
-      <p class="muted" style="margin-top:-8px;">一次填好幾筆基本資料；條碼、照片這類細節可以之後再用上面的表單個別編輯補上。</p>
+      <p class="muted" style="margin-top:-8px;">一次填好幾筆基本資料；條碼這類細節可以之後再用上面的表單個別編輯補上。</p>
       <div id="productBatchRows"></div>
       <div style="display:flex; gap:8px; margin:4px 0 16px;">
         <button type="button" class="btn small" id="btnAddProductRow">+ 新增一列</button>
       </div>
       <button class="btn primary" id="btnSubmitProductBatch">確認新增全部</button>
       <p class="muted" id="productBatchHint" style="margin-top:10px;"></p>
+    </div>
+
+    <div class="panel">
+      <h2>從檔案匯入商品</h2>
+      <p class="muted" style="margin-top:-8px;">支援 Excel（.xlsx／.xls）、CSV、TSV 或其他文字表格檔。每個人整理的表格欄位名稱、順序都不一樣，系統會先自動猜測對應欄位，猜錯了可以自己重新選擇，不用照著固定格式填。</p>
+      <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv,.tsv,.txt">
+      <div id="importSection" style="display:none; margin-top:16px;">
+        <h3 style="font-size:13px; margin-bottom:8px; font-weight:700;">欄位對應</h3>
+        <div id="importMappingFields" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+        <p class="muted" id="importCount" style="margin-top:12px;"></p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>名稱</th><th>分類</th><th>供應商</th><th>單價</th><th>庫存</th><th>安全庫存</th><th>單位</th></tr></thead>
+          <tbody id="importPreviewBody"></tbody>
+        </table></div>
+        <button class="btn primary" id="btnSubmitImport" style="margin-top:14px;">確認匯入全部</button>
+        <p class="muted" id="importHint" style="margin-top:10px;"></p>
+      </div>
     </div>
 
     <div class="panel">
@@ -1230,13 +1239,9 @@
 
     body.innerHTML = list.length ? list.map(p => {
       const s = productStatus(p);
-      const thumb = p.image
-        ? `<div style="width:36px;height:36px;border-radius:6px;background:url('${p.image}') center/cover;border:1px solid var(--border);"></div>`
-        : `<div style="width:36px;height:36px;border-radius:6px;background:var(--bg);border:1px solid var(--border);"></div>`;
       const avgCost = getAverageCost(p.id);
       const showAvg = Math.abs(avgCost - p.price) > 0.01;
       return `<tr>
-        <td>${thumb}</td>
         <td>${p.name}${p.barcode ? `<div class="muted" style="margin-top:2px;">#${p.barcode}</div>` : ""}</td>
         <td>${p.category}</td>
         <td>${p.supplier || "-"}</td>
@@ -1748,19 +1753,12 @@
   }
 
   /* ---------- product form (standalone, in 新增商品／分類／供應商 tab) ---------- */
-  let pendingImageData = "";
   let productFormReturnView = null;
-
-  function setImagePreview(dataUrl){
-    const preview = document.getElementById("pImagePreview");
-    preview.style.backgroundImage = dataUrl ? `url('${dataUrl}')` : "none";
-  }
 
   function resetProductForm(){
     document.getElementById("editProductId").value = "";
     document.getElementById("productFormTitle").textContent = "新增商品";
     document.getElementById("btnCancelEditProduct").style.display = "none";
-    document.getElementById("pImageFile").value = "";
     document.getElementById("pName").value = "";
     document.getElementById("pBarcode").value = "";
     document.getElementById("pSupplier").value = "";
@@ -1768,8 +1766,6 @@
     document.getElementById("pQty").value = 0;
     document.getElementById("pThreshold").value = 5;
     document.getElementById("pUnit").value = "件";
-    pendingImageData = "";
-    setImagePreview("");
     productFormReturnView = null;
   }
 
@@ -1779,7 +1775,6 @@
     document.getElementById("editProductId").value = id;
     document.getElementById("productFormTitle").textContent = "編輯商品：" + p.name;
     document.getElementById("btnCancelEditProduct").style.display = "inline-flex";
-    document.getElementById("pImageFile").value = "";
     document.getElementById("pName").value = p.name;
     document.getElementById("pBarcode").value = p.barcode || "";
     document.getElementById("pCategory").value = p.category;
@@ -1788,8 +1783,6 @@
     document.getElementById("pQty").value = p.qty;
     document.getElementById("pThreshold").value = p.threshold;
     document.getElementById("pUnit").value = p.unit || "件";
-    pendingImageData = p.image || "";
-    setImagePreview(pendingImageData);
   }
 
   function saveProduct(){
@@ -1803,7 +1796,6 @@
     const data = {
       name,
       barcode: document.getElementById("pBarcode").value.trim(),
-      image: pendingImageData,
       category: document.getElementById("pCategory").value,
       supplier: document.getElementById("pSupplier").value,
       price: Number(document.getElementById("pPrice").value) || 0,
@@ -1949,6 +1941,272 @@
     resetProductBatch();
 
     renderProducts(); renderStockBatchRows(); renderCategorySelects(); renderDashboard();
+    persist();
+  }
+
+  /* ---------- import products from Excel / CSV / TSV / other delimited text files
+     Different people keep their tables in different formats and column orders,
+     so this: (1) parses whatever structure the file has, (2) guesses which
+     column means what by keyword matching, (3) always lets the person confirm
+     or fix the mapping before anything is actually imported. ---------- */
+  let importRows = [];
+  let importHeaders = [];
+  let importMapping = { name:"", category:"", supplier:"", price:"", qty:"", threshold:"", unit:"", barcode:"" };
+  // For any field where none of the file's columns are the right fit, the person can
+  // instead type one fixed value that gets applied to every imported row.
+  const CUSTOM_VALUE_MARK = "__custom__";
+  let importCustomValues = { name:"", category:"", supplier:"", price:"", qty:"", threshold:"", unit:"", barcode:"" };
+  const IMPORT_FIELD_IS_NUMBER = { price:true, qty:true, threshold:true };
+
+  const IMPORT_FIELD_LABELS = {
+    name: "商品名稱 *",
+    category: "分類",
+    supplier: "供應商",
+    price: "單價（成本）",
+    qty: "庫存數量",
+    threshold: "安全庫存",
+    unit: "單位",
+    barcode: "條碼"
+  };
+  const IMPORT_FIELD_KEYWORDS = {
+    name: ["名稱","品名","商品名稱","商品","品項","product","name","item"],
+    category: ["分類","類別","種類","category","type"],
+    supplier: ["供應商","廠商","供貨商","vendor","supplier"],
+    price: ["單價","成本","進貨價","進價","cost","price"],
+    qty: ["庫存","數量","現有庫存","stock","qty","quantity"],
+    threshold: ["安全庫存","警戒庫存","最低庫存","min","threshold"],
+    unit: ["單位","unit"],
+    barcode: ["條碼","貨號","sku","barcode","code"]
+  };
+
+  function guessImportMapping(headers){
+    const used = new Set();
+    const mapping = {};
+    Object.keys(IMPORT_FIELD_KEYWORDS).forEach(field => {
+      const keywords = IMPORT_FIELD_KEYWORDS[field];
+      const match = headers.find(h => !used.has(h) && keywords.some(k => h.toLowerCase().includes(k.toLowerCase())));
+      mapping[field] = match || "";
+      if(match) used.add(match);
+    });
+    return mapping;
+  }
+
+  function detectDelimiter(sampleLine){
+    const counts = { ",": (sampleLine.match(/,/g)||[]).length, "\t": (sampleLine.match(/\t/g)||[]).length, ";": (sampleLine.match(/;/g)||[]).length };
+    let best = ",", max = -1;
+    Object.keys(counts).forEach(d => { if(counts[d] > max){ max = counts[d]; best = d; } });
+    return max > 0 ? best : ",";
+  }
+
+  function parseDelimitedText(text, delimiter){
+    const rows = [];
+    let row = [], field = "", inQuotes = false;
+    for(let i=0;i<text.length;i++){
+      const c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i++; }
+          else inQuotes = false;
+        } else field += c;
+      } else {
+        if(c === '"') inQuotes = true;
+        else if(c === delimiter){ row.push(field); field = ""; }
+        else if(c === "\n"){ row.push(field); rows.push(row); row = []; field = ""; }
+        else if(c === "\r"){ /* ignore, \n handles the line break */ }
+        else field += c;
+      }
+    }
+    if(field.length || row.length){ row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(v => String(v).trim() !== ""));
+  }
+
+  function delimitedRowsToObjects(rows){
+    if(rows.length === 0) return [];
+    const headers = rows[0].map((h,i) => h.trim() || ("欄位" + (i+1)));
+    return rows.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h,i) => { obj[h] = r[i] !== undefined ? r[i] : ""; });
+      return obj;
+    });
+  }
+
+  function handleImportFile(file){
+    const ext = file.name.split(".").pop().toLowerCase();
+    if(ext === "xlsx" || ext === "xls"){
+      if(typeof XLSX === "undefined"){
+        showToast("目前無法讀取 Excel 檔案，請確認網路連線後重新整理再試一次。");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try{
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          finishParsedImport(json);
+        } catch(err){
+          showToast("讀取檔案失敗，請確認檔案格式是否正確。");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try{
+          const text = String(e.target.result);
+          const firstLine = text.split(/\r?\n/)[0] || "";
+          const delimiter = detectDelimiter(firstLine);
+          const rows = parseDelimitedText(text, delimiter);
+          const json = delimitedRowsToObjects(rows);
+          finishParsedImport(json);
+        } catch(err){
+          showToast("讀取檔案失敗，請確認檔案格式是否正確。");
+        }
+      };
+      reader.readAsText(file, "UTF-8");
+    }
+  }
+
+  function finishParsedImport(json){
+    if(!json || json.length === 0){
+      showToast("這個檔案裡沒有讀到資料，請確認檔案內容。");
+      return;
+    }
+    importHeaders = Object.keys(json[0]);
+    importRows = json;
+    importMapping = guessImportMapping(importHeaders);
+    importCustomValues = { name:"", category:"", supplier:"", price:"", qty:"", threshold:"", unit:"", barcode:"" };
+    renderImportMappingUI();
+    document.getElementById("importSection").style.display = "block";
+  }
+
+  function importFieldValue(field, row){
+    if(importMapping[field] === CUSTOM_VALUE_MARK){
+      const v = importCustomValues[field];
+      return IMPORT_FIELD_IS_NUMBER[field] ? (Number(v) || 0) : String(v || "").trim();
+    }
+    if(!importMapping[field]) return IMPORT_FIELD_IS_NUMBER[field] ? 0 : "";
+    const raw = row[importMapping[field]];
+    return IMPORT_FIELD_IS_NUMBER[field] ? (Number(raw) || 0) : String(raw ?? "").trim();
+  }
+
+  function mapImportRow(row){
+    return {
+      name: importFieldValue("name", row),
+      category: importFieldValue("category", row),
+      supplier: importFieldValue("supplier", row),
+      price: importFieldValue("price", row),
+      qty: importFieldValue("qty", row),
+      threshold: importFieldValue("threshold", row),
+      unit: importFieldValue("unit", row),
+      barcode: importFieldValue("barcode", row)
+    };
+  }
+
+  function renderImportMappingUI(){
+    const container = document.getElementById("importMappingFields");
+    const headerOptions = `<option value="">（不匯入）</option>`
+      + importHeaders.map(h => `<option value="${h}">${h}</option>`).join("")
+      + `<option value="${CUSTOM_VALUE_MARK}">✏️ 自訂固定值...</option>`;
+    container.innerHTML = Object.keys(IMPORT_FIELD_LABELS).map(field => {
+      const current = importMapping[field];
+      const opts = current
+        ? headerOptions.replace(`value="${current}"`, `value="${current}" selected`)
+        : headerOptions;
+      const showCustomInput = current === CUSTOM_VALUE_MARK;
+      const inputType = IMPORT_FIELD_IS_NUMBER[field] ? "number" : "text";
+      return `<div style="flex:1; min-width:150px;">
+        <label style="font-size:11px; display:block; margin-bottom:3px; color:var(--ink-soft);">${IMPORT_FIELD_LABELS[field]}</label>
+        <select data-field="${field}" class="import-map-select" style="width:100%;">${opts}</select>
+        <input type="${inputType}" data-field="${field}" class="import-custom-input"
+          placeholder="輸入固定值，套用到每一筆"
+          value="${importCustomValues[field] ?? ""}"
+          style="width:100%; margin-top:6px; ${showCustomInput ? "" : "display:none;"}">
+      </div>`;
+    }).join("");
+
+    container.querySelectorAll(".import-map-select").forEach(sel => {
+      sel.onchange = () => {
+        importMapping[sel.dataset.field] = sel.value;
+        const input = container.querySelector(`.import-custom-input[data-field="${sel.dataset.field}"]`);
+        if(input) input.style.display = sel.value === CUSTOM_VALUE_MARK ? "" : "none";
+        renderImportPreview();
+      };
+    });
+    container.querySelectorAll(".import-custom-input").forEach(inp => {
+      inp.oninput = () => {
+        importCustomValues[inp.dataset.field] = inp.value;
+        renderImportPreview();
+      };
+    });
+    renderImportPreview();
+  }
+
+  function renderImportPreview(){
+    const body = document.getElementById("importPreviewBody");
+    const preview = importRows.slice(0,5).map(mapImportRow);
+    body.innerHTML = preview.length ? preview.map(r => `<tr>
+        <td>${r.name || `<span class="muted">（空白）</span>`}</td>
+        <td>${r.category || "-"}</td>
+        <td>${r.supplier || "-"}</td>
+        <td class="qty">$${fmt(r.price)}</td>
+        <td class="qty">${fmt(r.qty)}</td>
+        <td class="qty">${fmt(r.threshold)}</td>
+        <td>${r.unit || "-"}</td>
+      </tr>`).join("") : `<tr><td colspan="7" class="empty">沒有資料可預覽</td></tr>`;
+    document.getElementById("importCount").textContent = `共讀到 ${importRows.length} 筆資料（僅預覽前 5 筆，欄位對應調整後這裡會跟著更新）`;
+  }
+
+  function submitImport(){
+    const hint = document.getElementById("importHint");
+    if(!importMapping.name){
+      hint.style.color = "var(--danger)";
+      hint.textContent = "請至少指定「商品名稱」對應的欄位。";
+      return;
+    }
+    const mapped = importRows.map(mapImportRow).filter(r => r.name);
+    if(mapped.length === 0){
+      hint.style.color = "var(--danger)";
+      hint.textContent = "沒有讀到有效的商品名稱，無法匯入。";
+      return;
+    }
+
+    let addedCategories = 0, addedSuppliers = 0;
+    mapped.forEach(r => {
+      let category = r.category;
+      if(!category){
+        category = state.categories[0] || "未分類";
+      }
+      if(!state.categories.includes(category)){ state.categories.push(category); addedCategories++; }
+      if(r.supplier && !state.suppliers.some(s => s.name === r.supplier)){
+        state.suppliers.push({ name: r.supplier, contact:"", phone:"", address:"", note:"" });
+        addedSuppliers++;
+      }
+      state.products.push({
+        id: state.nextProductId++,
+        name: r.name,
+        barcode: r.barcode || "",
+        image: "",
+        category,
+        supplier: r.supplier || "",
+        price: r.price || 0,
+        qty: r.qty || 0,
+        threshold: r.threshold || 0,
+        unit: r.unit || "件"
+      });
+    });
+
+    hint.style.color = "var(--primary-dark)";
+    hint.textContent = `已匯入 ${mapped.length} 項商品${addedCategories ? `，新增 ${addedCategories} 個分類` : ""}${addedSuppliers ? `、新增 ${addedSuppliers} 個供應商` : ""}。`;
+
+    importRows = []; importHeaders = [];
+    importCustomValues = { name:"", category:"", supplier:"", price:"", qty:"", threshold:"", unit:"", barcode:"" };
+    document.getElementById("importSection").style.display = "none";
+    document.getElementById("importFileInput").value = "";
+
+    renderCategorySelects(); renderMeta(); renderSupplierTable(); renderStockFilters();
+    renderStockBatchRows(); renderProductBatchRows(); renderProducts(); renderDashboard();
     persist();
   }
 
@@ -2592,27 +2850,17 @@
     };
     document.getElementById("btnAddProductRow").onclick = addProductBatchRow;
     document.getElementById("btnSubmitProductBatch").onclick = submitProductBatch;
+    document.getElementById("importFileInput").onchange = (e) => {
+      const file = e.target.files[0];
+      if(file) handleImportFile(file);
+    };
+    document.getElementById("btnSubmitImport").onclick = submitImport;
 
     document.getElementById("btnAddRecipeRow").onclick = addRecipeRow;
     document.getElementById("btnSaveCombo").onclick = saveCombo;
     document.getElementById("btnCancelEditCombo").onclick = resetComboForm;
     document.getElementById("btnAddComboRow").onclick = addComboRow;
 
-    document.getElementById("pImageFile").onchange = (e) => {
-      const file = e.target.files[0];
-      if(!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        pendingImageData = reader.result;
-        setImagePreview(pendingImageData);
-      };
-      reader.readAsDataURL(file);
-    };
-    document.getElementById("btnRemoveImage").onclick = () => {
-      pendingImageData = "";
-      document.getElementById("pImageFile").value = "";
-      setImagePreview("");
-    };
     document.getElementById("btnScanProduct").onclick = () => {
       openScanner((value) => {
         document.getElementById("pBarcode").value = value;
