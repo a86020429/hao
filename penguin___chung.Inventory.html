@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg: #E7E8E6;
@@ -156,6 +157,14 @@
   .bp-row input{padding:7px 8px;font-size:13px;}
   .bp-row .with-btn{display:flex;gap:4px;}
   .bp-row .with-btn button{padding:6px 8px;font-size:12px;}
+
+  .map-row{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--surface-2);}
+  .map-row:last-child{border-bottom:none;}
+  .map-row .map-col-name{flex:1;font-size:13px;font-weight:500;}
+  .map-row .map-col-sample{flex:1.4;font-size:12px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .map-row select{flex:1.2;}
+  #excelPreview table{min-width:600px;}
+  #excelPreview th{white-space:nowrap;}
 
   /* Scanner modal */
   #scannerModal .modal-box{max-width:420px;text-align:center;}
@@ -339,10 +348,33 @@
         </div>
         <div class="row" style="gap:8px;">
           <button class="btn secondary" id="exportProductsCsvBtn">⬇ 匯出商品清單 CSV</button>
+          <button class="btn secondary" id="openExcelImportBtn">⬆ 匯入商品檔案</button>
           <button class="btn secondary" id="addBatchProductBtn">+ 批次新增</button>
           <button class="btn" id="addProductBtn">+ 新增商品</button>
         </div>
       </div>
+      <div class="card">
+        <div class="field">
+          <label>搜尋商品</label>
+          <input type="text" id="productSearchInput" placeholder="輸入系列、品項、款式或條碼關鍵字搜尋">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>系列</label>
+            <select id="filterSeriesSelect"><option value="">全部系列</option></select>
+          </div>
+          <div class="field">
+            <label>品項</label>
+            <select id="filterModelSelect"><option value="">全部品項</option></select>
+          </div>
+          <div class="field">
+            <label>款式</label>
+            <select id="filterStyleSelect"><option value="">全部款式</option></select>
+          </div>
+        </div>
+        <button type="button" class="btn secondary sm" id="clearProductFilterBtn">清除搜尋</button>
+      </div>
+
       <div class="card">
         <div class="tree-head-row">
           <div>系列 / 品項 / 款式</div>
@@ -499,6 +531,59 @@
     <div class="modal-actions">
       <button type="button" class="btn secondary" onclick="closeBatchProductModal()">取消</button>
       <button type="button" class="btn" id="saveBatchProductsBtn">全部儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Excel import modal -->
+<div class="modal-overlay" id="excelImportModal">
+  <div class="modal-box" style="max-width:860px;">
+    <h3>匯入商品檔案</h3>
+
+    <div id="excelStep1">
+      <p style="color:var(--text-soft);font-size:13px;margin:0 0 14px;">
+        支援 Excel（.xlsx / .xls）、CSV、Numbers（.numbers）、ODS（.ods）、純文字表格（.txt / .tsv）。不管你的表格欄位叫什麼名字、順序怎麼排，選好檔案後可以自己指定每一欄對應到系統的哪個欄位。
+      </p>
+      <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv,.ods,.numbers,.txt,.tsv">
+    </div>
+
+    <div id="excelStep2" style="display:none;">
+      <h3 style="font-size:14.5px;margin:16px 0 8px;">欄位對應</h3>
+      <p style="color:var(--text-soft);font-size:12.5px;margin:0 0 10px;">系統已嘗試自動猜測，請確認或修改每一欄要對應到哪個欄位；不需要的欄位選「不匯入」。</p>
+      <div id="excelMappingRows"></div>
+
+      <h3 style="font-size:14.5px;margin:18px 0 8px;">自訂固定值（欄位未對應時使用）</h3>
+      <p style="color:var(--text-soft);font-size:12.5px;margin:0 0 10px;">如果系列／品項／款式當中有某一欄，這份檔案裡完全沒有對應的欄位，可以在這裡手動輸入一個固定值，套用到「這次匯入」的所有商品（例如整份檔案都是同一個系列，檔案裡只有品項和款式）。若該欄位已經對應到檔案裡的欄位，這裡會自動停用。</p>
+      <div class="row" id="excelCustomFieldsRow">
+        <div class="field">
+          <label>自訂系列</label>
+          <input type="text" id="excelCustomSeries" placeholder="例如：A品牌">
+        </div>
+        <div class="field">
+          <label>自訂品項</label>
+          <input type="text" id="excelCustomModel" placeholder="選填">
+        </div>
+        <div class="field">
+          <label>自訂款式</label>
+          <input type="text" id="excelCustomStyle" placeholder="選填">
+        </div>
+      </div>
+
+      <h3 style="font-size:14.5px;margin:18px 0 8px;">預覽（前 5 筆）</h3>
+      <div class="table-scroll"><div id="excelPreview"></div></div>
+
+      <h3 style="font-size:14.5px;margin:18px 0 8px;">遇到重複商品時</h3>
+      <p style="color:var(--text-soft);font-size:12.5px;margin:0 0 8px;">判斷「重複」的方式：優先比對條碼，沒有條碼再比對系列/品項/款式是否完全相同。</p>
+      <select id="excelDupMode">
+        <option value="update">更新現有商品的庫存與安全庫存（建議）</option>
+        <option value="skip">略過重複，只新增沒見過的商品</option>
+        <option value="addAll">不比對，全部當新商品新增</option>
+      </select>
+
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" onclick="closeExcelImportModal()">取消</button>
+        <button type="button" class="btn" id="excelImportConfirmBtn">開始匯入</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1033,7 +1118,53 @@ document.getElementById('histResetBtn').addEventListener('click', ()=>{
 const expandedSeries = new Set();
 const expandedModels = new Set();
 
+let productFilterKeyword = '';
+let productFilterSeries = '';
+let productFilterModel = '';
+let productFilterStyle = '';
+
 function isLowStock(p){ return p.safetyStock>0 && totalStock(p) < p.safetyStock; }
+
+function isFilteringProducts(){
+  return !!(productFilterKeyword.trim() || productFilterSeries || productFilterModel || productFilterStyle);
+}
+
+function getFilteredProducts(){
+  const kw = productFilterKeyword.trim().toLowerCase();
+  return state.products.filter(p=>{
+    if(productFilterSeries && (p.series||'')!==productFilterSeries) return false;
+    if(productFilterModel && (p.model||'')!==productFilterModel) return false;
+    if(productFilterStyle && (p.style||'')!==productFilterStyle) return false;
+    if(kw){
+      const hay = [p.series,p.model,p.style,p.barcode].map(x=>String(x||'').toLowerCase()).join(' ');
+      if(!hay.includes(kw)) return false;
+    }
+    return true;
+  });
+}
+
+function populateProductFilterDropdowns(){
+  const seriesSel = document.getElementById('filterSeriesSelect');
+  const modelSel = document.getElementById('filterModelSelect');
+  const styleSel = document.getElementById('filterStyleSelect');
+  if(!seriesSel) return;
+
+  const seriesSet = [...new Set(state.products.map(p=>p.series||'').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  seriesSel.innerHTML = '<option value="">全部系列</option>' + seriesSet.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  if(seriesSet.includes(productFilterSeries)) seriesSel.value = productFilterSeries; else { seriesSel.value=''; productFilterSeries=''; }
+
+  const modelPool = productFilterSeries ? state.products.filter(p=>(p.series||'')===productFilterSeries) : state.products;
+  const modelSet = [...new Set(modelPool.map(p=>p.model||'').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  modelSel.innerHTML = '<option value="">全部品項</option>' + modelSet.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  if(modelSet.includes(productFilterModel)) modelSel.value = productFilterModel; else { modelSel.value=''; productFilterModel=''; }
+
+  let stylePool = state.products;
+  if(productFilterSeries) stylePool = stylePool.filter(p=>(p.series||'')===productFilterSeries);
+  if(productFilterModel) stylePool = stylePool.filter(p=>(p.model||'')===productFilterModel);
+  const styleSet = [...new Set(stylePool.map(p=>p.style||'').filter(Boolean))].sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+  styleSel.innerHTML = '<option value="">全部款式</option>' + styleSet.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  if(styleSet.includes(productFilterStyle)) styleSel.value = productFilterStyle; else { styleSel.value=''; productFilterStyle=''; }
+}
 
 function groupProducts(){
   const map = new Map();
@@ -1074,8 +1205,22 @@ function toggleModel(key){
 
 function renderProducts(){
   const wrap = document.getElementById('productTree');
+  populateProductFilterDropdowns();
   if(state.products.length===0){
     wrap.innerHTML = '<div class="empty">尚未新增任何商品，點選右上角「新增商品」開始使用</div>';
+    return;
+  }
+  if(isFilteringProducts()){
+    const filtered = getFilteredProducts();
+    if(filtered.length===0){
+      wrap.innerHTML = '<div class="empty">找不到符合條件的商品</div>';
+      return;
+    }
+    wrap.innerHTML = filtered.map(p=>{
+      const parts = [p.series, p.model, p.style].filter(Boolean);
+      const label = parts.length ? parts.join(' / ') : '（未命名商品）';
+      return leafRow(p, '', label);
+    }).join('');
     return;
   }
   const grouped = groupProducts();
@@ -1150,6 +1295,34 @@ function closeProductModal(){
 document.getElementById('addProductBtn').addEventListener('click', ()=>openProductModal(null));
 document.getElementById('productScanBtn').addEventListener('click', ()=>{
   startScanner((code)=>{ document.getElementById('pf_barcode').value = code; });
+});
+
+document.getElementById('productSearchInput').addEventListener('input', (e)=>{
+  productFilterKeyword = e.target.value;
+  renderProducts();
+});
+document.getElementById('filterSeriesSelect').addEventListener('change', (e)=>{
+  productFilterSeries = e.target.value;
+  productFilterModel = '';
+  productFilterStyle = '';
+  renderProducts();
+});
+document.getElementById('filterModelSelect').addEventListener('change', (e)=>{
+  productFilterModel = e.target.value;
+  productFilterStyle = '';
+  renderProducts();
+});
+document.getElementById('filterStyleSelect').addEventListener('change', (e)=>{
+  productFilterStyle = e.target.value;
+  renderProducts();
+});
+document.getElementById('clearProductFilterBtn').addEventListener('click', ()=>{
+  productFilterKeyword = '';
+  productFilterSeries = '';
+  productFilterModel = '';
+  productFilterStyle = '';
+  document.getElementById('productSearchInput').value = '';
+  renderProducts();
 });
 
 document.getElementById('productForm').addEventListener('submit', (e)=>{
@@ -1270,6 +1443,261 @@ document.getElementById('saveBatchProductsBtn').addEventListener('click', ()=>{
   renderProducts();
   renderDashboard();
   alert('已新增 ' + rows.length + ' 項商品');
+});
+
+/* ---------- Excel / CSV import ---------- */
+const EXCEL_FIELD_OPTIONS = [
+  {value:'', label:'不匯入'},
+  {value:'series', label:'系列'},
+  {value:'model', label:'品項'},
+  {value:'style', label:'款式'},
+  {value:'barcode', label:'條碼'},
+  {value:'unit', label:'單位'},
+  {value:'safetyStock', label:'安全庫存'},
+  {value:'stock', label:'目前庫存'}
+];
+const EXCEL_FIELD_KEYWORDS = {
+  series: ['系列','分類','類別','category','series','brand','品牌'],
+  model: ['品項','型號','機型','model','項目','product'],
+  style: ['款式','顏色','花色','style','color','variant','樣式'],
+  barcode: ['條碼','barcode','sku','貨號','編號'],
+  unit: ['單位','unit'],
+  safetyStock: ['安全庫存','安全存量','低於','安全量','min','minimum'],
+  stock: ['庫存','數量','存量','qty','quantity','stock','件數']
+};
+function guessFieldForHeader(header){
+  const h = String(header||'').toLowerCase().trim();
+  if(!h) return '';
+  for(const field of Object.keys(EXCEL_FIELD_KEYWORDS)){
+    if(EXCEL_FIELD_KEYWORDS[field].some(kw=>h.includes(kw.toLowerCase()))) return field;
+  }
+  return '';
+}
+
+let excelHeaders = [];
+let excelDataRows = [];
+
+document.getElementById('openExcelImportBtn').addEventListener('click', ()=>{
+  document.getElementById('excelFileInput').value = '';
+  document.getElementById('excelStep1').style.display = '';
+  document.getElementById('excelStep2').style.display = 'none';
+  ['excelCustomSeries','excelCustomModel','excelCustomStyle'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = '';
+    el.disabled = false;
+  });
+  document.getElementById('excelImportModal').classList.add('open');
+});
+
+const EXCEL_CUSTOM_INPUT_IDS = {series:'excelCustomSeries', model:'excelCustomModel', style:'excelCustomStyle'};
+function updateExcelCustomFieldsState(){
+  const mapping = getExcelMapping();
+  Object.keys(EXCEL_CUSTOM_INPUT_IDS).forEach(field=>{
+    const input = document.getElementById(EXCEL_CUSTOM_INPUT_IDS[field]);
+    const mapped = mapping[field]!==undefined;
+    input.disabled = mapped;
+    if(mapped) input.value = '';
+  });
+}
+function getExcelCustomValues(){
+  return {
+    series: document.getElementById('excelCustomSeries').value.trim(),
+    model: document.getElementById('excelCustomModel').value.trim(),
+    style: document.getElementById('excelCustomStyle').value.trim()
+  };
+}
+['excelCustomSeries','excelCustomModel','excelCustomStyle'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', renderExcelPreview);
+});
+function closeExcelImportModal(){
+  document.getElementById('excelImportModal').classList.remove('open');
+}
+
+function parseDelimitedText(text){
+  // manual line/column split for plain .txt / .tsv files (avoids relying on
+  // the spreadsheet library's CSV heuristics for ambiguous plain-text input)
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='');
+  return lines.map(line=>{
+    const delim = line.includes('\t') ? '\t' : ',';
+    return line.split(delim).map(c=>c.trim());
+  });
+}
+
+function finishExcelRows(rows){
+  if(!rows || rows.length===0){ alert('這個檔案是空的'); return; }
+  excelHeaders = rows[0].map(h=>String(h||'').trim());
+  excelDataRows = rows.slice(1).filter(r=> r.some(cell=> String(cell||'').trim()!==''));
+  if(excelDataRows.length===0){ alert('沒有找到資料列（可能只有標題列）'); return; }
+  renderExcelMapping();
+  document.getElementById('excelStep1').style.display = 'none';
+  document.getElementById('excelStep2').style.display = '';
+}
+
+document.getElementById('excelFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const ext = (file.name.split('.').pop()||'').toLowerCase();
+  const reader = new FileReader();
+
+  if(['txt','tsv'].includes(ext)){
+    reader.onload = (evt)=>{
+      try{
+        finishExcelRows(parseDelimitedText(String(evt.target.result)));
+      }catch(err){
+        alert('讀取檔案失敗，請確認檔案內容是否為表格式的純文字（欄位以 Tab 或逗號分隔）');
+      }
+    };
+    reader.readAsText(file);
+    return;
+  }
+
+  if(ext==='csv'){
+    reader.onload = (evt)=>{
+      try{
+        const workbook = XLSX.read(String(evt.target.result), {type:'string'});
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        finishExcelRows(XLSX.utils.sheet_to_json(sheet, {header:1, defval:''}));
+      }catch(err){
+        alert('讀取 CSV 失敗，請確認檔案格式是否正確');
+      }
+    };
+    reader.readAsText(file);
+    return;
+  }
+
+  // xlsx / xls / ods / numbers — binary spreadsheet formats
+  reader.onload = (evt)=>{
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, {type:'array'});
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      finishExcelRows(XLSX.utils.sheet_to_json(sheet, {header:1, defval:''}));
+    }catch(err){
+      alert('讀取檔案失敗，這個檔案格式可能不支援解析，建議另存成 .xlsx 或 .csv 後再匯入');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function renderExcelMapping(){
+  const wrap = document.getElementById('excelMappingRows');
+  wrap.innerHTML = excelHeaders.map((h,idx)=>{
+    const guess = guessFieldForHeader(h);
+    const sample = excelDataRows.slice(0,3).map(r=>r[idx]).filter(v=>v!=='').join('、');
+    return `<div class="map-row">
+      <div class="map-col-name">${escapeHtml(h||'（第 '+(idx+1)+' 欄）')}</div>
+      <div class="map-col-sample">例：${escapeHtml(sample||'－')}</div>
+      <select id="excelMap_${idx}">
+        ${EXCEL_FIELD_OPTIONS.map(o=>`<option value="${o.value}" ${o.value===guess?'selected':''}>${o.label}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+  updateExcelCustomFieldsState();
+  renderExcelPreview();
+  wrap.querySelectorAll('select').forEach(sel=> sel.addEventListener('change', ()=>{
+    updateExcelCustomFieldsState();
+    renderExcelPreview();
+  }));
+}
+
+function getExcelMapping(){
+  const mapping = {}; // field -> column index
+  excelHeaders.forEach((h,idx)=>{
+    const sel = document.getElementById('excelMap_'+idx);
+    const field = sel ? sel.value : '';
+    if(field) mapping[field] = idx;
+  });
+  return mapping;
+}
+
+function renderExcelPreview(){
+  const mapping = getExcelMapping();
+  const customVals = getExcelCustomValues();
+  const fields = ['series','model','style','barcode','unit','safetyStock','stock'];
+  const labelOf = f => EXCEL_FIELD_OPTIONS.find(o=>o.value===f).label;
+  const previewRows = excelDataRows.slice(0,5);
+
+  document.getElementById('excelPreview').innerHTML = `<table><thead><tr>${fields.map(f=>`<th>${labelOf(f)}</th>`).join('')}</tr></thead><tbody>
+    ${previewRows.map(r=>{
+      return `<tr>${fields.map(f=>{
+        const idx = mapping[f];
+        let val = (idx!==undefined) ? r[idx] : '';
+        if(idx===undefined && customVals[f]) val = customVals[f] + '（自訂）';
+        return `<td>${escapeHtml(val)}</td>`;
+      }).join('')}</tr>`;
+    }).join('')}
+  </tbody></table>`;
+}
+
+document.getElementById('excelImportConfirmBtn').addEventListener('click', ()=>{
+  const mapping = getExcelMapping();
+  const customVals = getExcelCustomValues();
+  const dupMode = document.getElementById('excelDupMode').value;
+
+  const seriesCovered = mapping.series!==undefined || !!customVals.series;
+  const modelCovered = mapping.model!==undefined || !!customVals.model;
+  const styleCovered = mapping.style!==undefined || !!customVals.style;
+  if(!seriesCovered && !modelCovered && !styleCovered){
+    if(!confirm('系列/品項/款式都沒有對應任何欄位，也沒有填寫自訂固定值，匯入的商品會顯示成「未命名商品」，確定要繼續嗎？')) return;
+  }
+
+  const existingByBarcode = new Map(state.products.filter(p=>p.barcode).map(p=>[p.barcode,p]));
+  const taxonomyKey = p => [p.series||'', p.model||'', p.style||''].join('||');
+  const existingByTaxonomy = new Map(state.products.map(p=>[taxonomyKey(p), p]));
+
+  let added=0, updated=0, skipped=0;
+  const seenBarcodesThisImport = new Set();
+
+  excelDataRows.forEach(row=>{
+    const get = (field)=>{
+      if(mapping[field]!==undefined) return String(row[mapping[field]]??'').trim();
+      if(customVals[field]) return customVals[field];
+      return '';
+    };
+    const series = get('series');
+    const model = get('model');
+    const style = get('style');
+    const barcode = get('barcode');
+    const unit = get('unit') || '件';
+    const safetyRaw = get('safetyStock');
+    const stockRaw = get('stock');
+    const safetyStock = safetyRaw!=='' ? (parseInt(safetyRaw,10)||0) : 0;
+    const stock = stockRaw!=='' ? (parseInt(stockRaw,10)||0) : 0;
+
+    if(!series && !model && !style && !barcode){ skipped++; return; }
+    if(barcode && seenBarcodesThisImport.has(barcode)){
+      // duplicate barcode within the same file — still try to match/merge below rather than hard-skip
+    }
+    if(barcode) seenBarcodesThisImport.add(barcode);
+
+    let target = null;
+    if(dupMode!=='addAll'){
+      if(barcode && existingByBarcode.has(barcode)) target = existingByBarcode.get(barcode);
+      else if(existingByTaxonomy.has(taxonomyKey({series,model,style}))) target = existingByTaxonomy.get(taxonomyKey({series,model,style}));
+    }
+
+    if(target){
+      if(dupMode==='skip'){ skipped++; return; }
+      // dupMode === 'update'
+      if(barcode) target.barcode = barcode;
+      if(get('unit')) target.unit = unit;
+      if(safetyRaw!=='') target.safetyStock = safetyStock;
+      if(stockRaw!=='') target.stock = stock;
+      updated++;
+    }else{
+      const newProduct = {id: uid('prod'), series, model, style, barcode, unit, safetyStock, stock};
+      state.products.push(newProduct);
+      if(barcode) existingByBarcode.set(barcode, newProduct);
+      existingByTaxonomy.set(taxonomyKey(newProduct), newProduct);
+      added++;
+    }
+  });
+
+  saveState();
+  closeExcelImportModal();
+  renderProducts();
+  renderDashboard();
+  alert(`匯入完成：新增 ${added} 筆，更新 ${updated} 筆，略過 ${skipped} 筆`);
 });
 
 /* ---------- Appearance ---------- */
