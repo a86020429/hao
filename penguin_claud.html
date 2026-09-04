@@ -10,44 +10,76 @@
     --bg:#F7F3EC; --surface:#FFFFFF; --text:#4A4038; --text-soft:#8A7F73; --border:#E5DED2;
     --tag-in:#EFEAE0; --tag-out:#E7D9C9; --tag-transfer:#CBB89C; --tag-adjust:#B8A88F; --tag-loss:#8C7C6E;
     --low:#E8C2A0; --zero:#D98C7B; --negative:#8B4B3B;
-    --radius:12px;
+    --tile-tan:#E7DCC7;
+    --radius:14px;
+    --shadow-soft:0 1px 2px rgba(140,124,110,0.08), 0 6px 20px rgba(140,124,110,0.09);
+    --shadow-tiny:0 1px 3px rgba(140,124,110,0.14);
+    --ring:0 0 0 3px rgba(201,166,107,0.22);
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);}
-  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;position:sticky;top:0;z-index:20;}
-  header h1{margin:0 0 2px;font-size:19px;color:var(--primary-dark);}
+  body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;position:sticky;top:0;z-index:20;box-shadow:0 1px 0 rgba(140,124,110,0.05);}
+  header h1{margin:0 0 2px;font-size:19px;color:var(--primary-dark);letter-spacing:.2px;}
   header .shopname{font-size:13px;color:var(--text-soft);}
   nav{display:flex;gap:6px;overflow-x:auto;padding:10px 14px 0;background:var(--surface);border-bottom:1px solid var(--border);}
-  nav button{border:none;background:transparent;padding:10px 14px;font-size:14px;border-radius:10px 10px 0 0;cursor:pointer;color:var(--text-soft);white-space:nowrap;}
+  nav button{border:none;background:transparent;padding:10px 14px;font-size:14px;border-radius:10px 10px 0 0;cursor:pointer;color:var(--text-soft);white-space:nowrap;transition:color .15s ease,background-color .15s ease;}
+  nav button:hover{color:var(--primary-dark);}
   nav button.active{background:var(--bg);color:var(--primary-dark);font-weight:700;}
   main{max-width:960px;margin:0 auto;padding:18px 14px 60px;}
   .tabpage{display:none;}
   .tabpage.active{display:block;}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
-  .card h2{margin:0 0 14px;font-size:16px;color:var(--primary-dark);display:flex;align-items:center;gap:9px;}
-  .card h2::before{content:'';width:4px;height:16px;background:var(--primary);border-radius:3px;display:inline-block;flex-shrink:0;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow-soft);overflow-x:auto;}
+  .card h2{margin:0 0 14px;font-size:16px;color:var(--primary-dark);display:flex;align-items:center;gap:9px;letter-spacing:.2px;}
+  .card h2::before{content:'';width:4px;height:16px;background:linear-gradient(180deg,var(--accent),var(--primary));border-radius:3px;display:inline-block;flex-shrink:0;}
   .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;}
-  .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
+  .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;text-align:center;box-shadow:var(--shadow-soft);}
   .stat-box .num{font-size:24px;font-weight:700;color:var(--primary-dark);}
   .stat-box .label{font-size:12px;color:var(--text-soft);margin-top:2px;}
+  .dash-heading{margin:2px 0 16px;font-size:20px;font-weight:800;color:var(--text);letter-spacing:.2px;}
+  .store-pill-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .store-pill-btn{
+    border:1px solid transparent;background:var(--tile-tan);color:var(--primary-dark);
+    font-size:14px;font-weight:700;padding:17px 8px;border-radius:18px;cursor:pointer;
+    text-align:center;font-family:inherit;transition:background-color .15s ease,color .15s ease,box-shadow .15s ease,transform .1s ease;
+  }
+  .store-pill-btn:hover{box-shadow:var(--shadow-tiny);transform:translateY(-1px);}
+  .store-pill-btn.active{background:var(--primary);color:#fff;box-shadow:var(--shadow-tiny);}
+  .store-pill-btn.span-full{grid-column:1 / -1;}
+  .dashboard-stat-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+  .dashboard-stat-grid .stat-box{text-align:left;padding:22px 20px;border-radius:20px;box-shadow:none;}
+  .dashboard-stat-grid .stat-box .num{font-size:32px;color:var(--text);}
+  .dashboard-stat-grid .stat-box .label{font-size:13px;margin-top:6px;}
+  .dashboard-stat-grid .stat-box:nth-child(4n+2),
+  .dashboard-stat-grid .stat-box:nth-child(4n+3){background:var(--tile-tan);border-color:transparent;}
+  .dashboard-stat-grid .stat-box:nth-child(4n+2) .num,
+  .dashboard-stat-grid .stat-box:nth-child(4n+3) .num{color:var(--primary-dark);}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  th,td{padding:7px 6px;border-bottom:1px solid var(--border);text-align:left;}
-  th{color:var(--text-soft);font-weight:600;font-size:12px;}
+  th,td{padding:8px 6px;border-bottom:1px solid var(--border);text-align:left;}
+  th{color:var(--text-soft);font-weight:600;font-size:12px;border-bottom:1.5px solid var(--primary);}
+  tbody tr{transition:background-color .12s ease;}
+  tbody tr:hover{background:rgba(168,153,138,0.06);}
   input[type=text],input[type=number],input[type=date],select,input[type=file]{
-    padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;color:var(--text);width:100%;
+    padding:8px 10px;border:1px solid var(--border);border-radius:9px;font-size:13px;background:#fff;color:var(--text);width:100%;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,select:focus{
+    outline:none;border-color:var(--accent);box-shadow:var(--ring);
   }
   input[type=color]{width:44px;height:32px;border:1px solid var(--border);border-radius:8px;padding:2px;background:#fff;}
-  .btn{background:var(--primary);color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:13px;}
-  .btn:hover{background:var(--primary-dark);}
-  .btn-outline{background:transparent;border:1px solid var(--primary);color:var(--primary-dark);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
-  .btn-small{padding:5px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--text);}
+  .btn{background:var(--primary);color:#fff;border:none;padding:9px 17px;border-radius:9px;cursor:pointer;font-size:13px;box-shadow:var(--shadow-tiny);transition:background-color .15s ease, transform .1s ease, box-shadow .15s ease;}
+  .btn:hover{background:var(--primary-dark);box-shadow:0 2px 6px rgba(140,124,110,0.22);transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn-outline{background:#fff;border:1px solid var(--primary);color:var(--primary-dark);padding:8px 15px;border-radius:9px;cursor:pointer;font-size:13px;transition:background-color .15s ease, box-shadow .15s ease, transform .1s ease;}
+  .btn-outline:hover{background:var(--bg);box-shadow:var(--shadow-tiny);transform:translateY(-1px);}
+  .btn-small{padding:5px 11px;font-size:12px;border-radius:7px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--text);transition:background-color .15s ease, box-shadow .15s ease;}
+  .btn-small:hover{box-shadow:var(--shadow-tiny);}
   .btn-small.danger{color:#a33;border-color:#e3c2c2;}
   .btn-small.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
-  .row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;align-items:end;margin-bottom:8px;padding:8px;border:1px dashed var(--border);border-radius:8px;}
-  .row-grid label{font-size:11px;color:var(--text-soft);display:block;margin-bottom:3px;}
+  .row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;align-items:end;margin-bottom:8px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.55);box-shadow:inset 0 1px 2px rgba(140,124,110,0.05);}
+  .row-grid label{font-size:11px;color:var(--text-soft);display:block;margin-bottom:4px;letter-spacing:.2px;}
   .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;color:#fff;font-weight:600;}
   .empty{color:var(--text-soft);text-align:center;padding:24px 0;font-size:13px;}
-  details.series-group{margin-bottom:10px;border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--bg);}
+  details.series-group{margin-bottom:10px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--bg);box-shadow:inset 0 1px 2px rgba(140,124,110,0.04);}
   details.series-group>summary{cursor:pointer;font-weight:700;color:var(--primary-dark);font-size:14px;}
   details.item-group{margin:8px 0 8px 10px;border-left:2px solid var(--border);padding-left:10px;}
   details.item-group>summary{cursor:pointer;font-weight:600;color:var(--text);font-size:13px;}
@@ -55,33 +87,51 @@
   .search-bar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
   .search-bar input{flex:1;min-width:160px;}
   .theme-swatches{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
-  .theme-swatch{border:2px solid transparent;border-radius:10px;padding:10px;cursor:pointer;width:120px;text-align:center;background:#fff;border-color:var(--border);}
-  .theme-swatch.selected{border-color:var(--primary);}
+  .theme-swatch{border:2px solid transparent;border-radius:12px;padding:10px;cursor:pointer;width:120px;text-align:center;background:#fff;border-color:var(--border);transition:border-color .15s ease, box-shadow .15s ease;}
+  .theme-swatch:hover{box-shadow:var(--shadow-tiny);}
+  .theme-swatch.selected{border-color:var(--primary);box-shadow:var(--ring);}
   .swatch-bar{height:20px;border-radius:6px;display:flex;overflow:hidden;margin-bottom:6px;}
   .swatch-bar span{flex:1;}
   .field{margin-bottom:10px;}
   .field label{display:block;font-size:12px;color:var(--text-soft);margin-bottom:4px;}
   .inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .type-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-  .type-tabs button{border:1px solid var(--border);background:#fff;padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;color:var(--text);}
+  .type-tabs button{border:1px solid var(--border);background:#fff;padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;color:var(--text);transition:background-color .15s ease, box-shadow .15s ease;}
+  .type-tabs button:hover{box-shadow:var(--shadow-tiny);}
   .type-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary);}
-  .hint{font-size:12px;color:var(--text-soft);margin-top:4px;}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--primary-dark);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;opacity:0;transition:opacity .25s;pointer-events:none;}
+  .hint{font-size:12px;color:var(--text-soft);margin-top:4px;line-height:1.6;}
+  .box{border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.6;}
+  .box.warn{background:#FBF1E4;border:1px solid #E8D2AC;color:#7A5A2E;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--primary-dark);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;opacity:0;transition:opacity .25s;pointer-events:none;box-shadow:var(--shadow-soft);}
   .toast.show{opacity:1;}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:200;padding:16px;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(74,64,56,0.5);display:none;align-items:center;justify-content:center;z-index:200;padding:16px;}
   .modal-overlay.show{display:flex;}
-  .modal-box{background:var(--surface);border-radius:16px;padding:16px;max-width:420px;width:100%;}
+  .modal-box{background:var(--surface);border-radius:var(--radius);padding:16px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(74,64,56,0.25);}
   .modal-box h3{margin:0 0 10px;font-size:15px;color:var(--primary-dark);}
   #scanReaderArea{width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:260px;}
-  .store-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .store-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
   .store-row:last-child{border-bottom:none;}
-  .notice-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--text-soft);line-height:1.6;}
+  .notice-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--text-soft);line-height:1.6;}
   footer#siteFooter{margin-top:30px;padding:22px 14px 90px;text-align:center;background:transparent;}
   footer#siteFooter .footer-inner{max-width:640px;margin:0 auto;color:var(--text);font-size:12px;line-height:1.8;}
   footer#siteFooter .footer-legal{margin-top:8px;font-size:11px;color:var(--text);opacity:.9;}
   nav button.active{position:relative;}
-  nav button.active::after{content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:var(--primary);border-radius:2px;}
-  @media (max-width:520px){ .stat-grid{grid-template-columns:repeat(2,1fr);} footer#siteFooter{padding-bottom:110px;} }
+  nav button.active::after{content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--accent),var(--primary));border-radius:2px;}
+  @media (max-width:640px){
+    main{padding:14px 10px 60px;}
+    .card{padding:15px 14px;border-radius:12px;}
+    header{padding:14px 16px;}
+    .row-grid{grid-template-columns:1fr !important;padding:10px;gap:8px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    nav{padding:8px 10px 0;}
+    nav button{padding:9px 12px;font-size:13px;}
+    table{font-size:12.5px;}
+    th,td{padding:7px 5px;}
+    footer#siteFooter{padding-bottom:110px;}
+    .store-pill-btn{font-size:13px;padding:14px 6px;border-radius:16px;}
+    .dashboard-stat-grid .stat-box{padding:18px 16px;}
+    .dashboard-stat-grid .stat-box .num{font-size:28px;}
+  }
 </style>
 </head>
 <body>
@@ -103,11 +153,13 @@
 
   <!-- 儀表板 -->
   <div class="tabpage active" id="tab-dashboard">
-    <div class="row-grid" style="grid-template-columns:200px 200px;border:none;padding:0;">
-      <div><label>檢視店家（庫存範圍）</label><select id="dashboardStoreFilter"></select></div>
+    <h2 class="dash-heading">首頁總覽</h2>
+    <div id="dashboardStoreButtons" class="store-pill-grid"></div>
+    <select id="dashboardStoreFilter" style="display:none;"></select>
+    <div class="row-grid" style="grid-template-columns:200px;border:none;padding:0;margin-top:4px;">
       <div><label>檢視日期</label><input type="date" id="dashboardDateFilter"></div>
     </div>
-    <div class="stat-grid" id="statGrid"></div>
+    <div class="stat-grid dashboard-stat-grid" id="statGrid"></div>
     <div class="card">
       <h2>低庫存 / 缺貨 / 負庫存 警示</h2>
       <div id="lowStockTable"><div class="empty">目前沒有資料</div></div>
@@ -864,7 +916,19 @@ function logStoreLabel(l){
   if(l.type==='transfer') return `${esc(l.fromStore||'-')} → ${esc(l.toStore||'-')}`;
   return esc(l.store || '-');
 }
+function renderDashboardStoreButtons(){
+  const wrap = document.getElementById('dashboardStoreButtons');
+  const hiddenSel = document.getElementById('dashboardStoreFilter');
+  if(!wrap || !hiddenSel) return;
+  const cur = hiddenSel.value || 'all';
+  const items = [{value:'all', label:'全部店家'}].concat(db.stores.map(s=>({value:s, label:s})));
+  wrap.innerHTML = items.map((it, idx)=>{
+    const isLastAlone = (idx === items.length-1) && (items.length % 3 === 1) && items.length > 1;
+    return `<button type="button" class="store-pill-btn ${it.value===cur?'active':''} ${isLastAlone?'span-full':''}" data-value="${esc(it.value)}">${esc(it.label)}</button>`;
+  }).join('');
+}
 function renderDashboard(){
+  renderDashboardStoreButtons();
   const filterSel = document.getElementById('dashboardStoreFilter');
   const stockStore = filterSel ? (filterSel.value || 'all') : 'all';
   const dateSel = document.getElementById('dashboardDateFilter');
@@ -884,24 +948,20 @@ function renderDashboard(){
   }
 
   const total = db.products.length;
-  const low = db.products.filter(p=>{ const q=qtyOf(p); return q>0 && q<=p.safety; }).length;
-  const zero = db.products.filter(p=>qtyOf(p)===0).length;
-  const negative = db.products.filter(p=>qtyOf(p)<0).length;
+  const warnCount = db.products.filter(p=>qtyOf(p)<=p.safety).length;
+  const totalQtyAll = db.products.reduce((s,p)=>s+qtyOf(p),0);
 
   let dayLogs = [];
   if(!restricted || deviceStore){
     dayLogs = db.logs.filter(l=>l.date===selDate && logMatchesStore(l, txnStore));
   }
-  const dayInQty = dayLogs.filter(l=>l.type==='in').reduce((s,l)=>s+l.qty,0);
-  const dayOutQty = dayLogs.filter(l=>l.type==='out').reduce((s,l)=>s+l.qty,0);
+  const todayTxnCount = dayLogs.length;
 
   document.getElementById('statGrid').innerHTML = `
-    <div class="stat-box"><div class="num">${total}</div><div class="label">商品總數</div></div>
-    <div class="stat-box"><div class="num">${low}</div><div class="label">低庫存</div></div>
-    <div class="stat-box"><div class="num">${zero}</div><div class="label">缺貨</div></div>
-    <div class="stat-box"><div class="num">${negative}</div><div class="label">負庫存</div></div>
-    <div class="stat-box"><div class="num">${(restricted && !deviceStore) ? '—' : dayInQty}</div><div class="label">當日進貨量</div></div>
-    <div class="stat-box"><div class="num">${(restricted && !deviceStore) ? '—' : dayOutQty}</div><div class="label">當日售出量</div></div>
+    <div class="stat-box"><div class="num">${total}</div><div class="label">品項總數</div></div>
+    <div class="stat-box"><div class="num">${warnCount}</div><div class="label">低庫存警示</div></div>
+    <div class="stat-box"><div class="num">${totalQtyAll}</div><div class="label">總庫存件數</div></div>
+    <div class="stat-box"><div class="num">${(restricted && !deviceStore) ? '—' : todayTxnCount}</div><div class="label">今日異動筆數</div></div>
   `;
 
   const warn = db.products.filter(p=>qtyOf(p)<=p.safety).sort((a,b)=>qtyOf(a)-qtyOf(b));
@@ -1696,6 +1756,12 @@ function init(){
   document.getElementById('dashboardDateFilter').value = todayStr();
   document.getElementById('dashboardStoreFilter').addEventListener('change', renderDashboard);
   document.getElementById('dashboardDateFilter').addEventListener('change', renderDashboard);
+  document.getElementById('dashboardStoreButtons').addEventListener('click', e=>{
+    const btn = e.target.closest('.store-pill-btn');
+    if(!btn) return;
+    document.getElementById('dashboardStoreFilter').value = btn.getAttribute('data-value');
+    renderDashboard();
+  });
 
   // records search tab
   document.getElementById('recordsStoreFilter').addEventListener('change', renderRecords);
